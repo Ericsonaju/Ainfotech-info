@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Copy of Kanban Flow",
+  "description": "A smart, AI-powered Kanban board designed to streamline your workflow. Features intuitive drag-and-drop task management and Gemini-powered assistance for task generation and breakdown.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
