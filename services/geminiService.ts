@@ -10,19 +10,26 @@ interface GeneratedTask {
 }
 
 export class GeminiService {
-  private ai: GoogleGenAI;
+  private ai: GoogleGenAI | null = null;
   private modelId = 'gemini-2.5-flash';
 
-  constructor() {
-    // strict compliance: use process.env.API_KEY directly
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  private getAI(): GoogleGenAI {
+    if (!this.ai) {
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY || '';
+      if (!apiKey) {
+        console.warn("Gemini API Key not configured. AI features will be disabled.");
+      }
+      this.ai = new GoogleGenAI({ apiKey });
+    }
+    return this.ai;
   }
 
   async generateTasksFromGoal(goal: string): Promise<GeneratedTask[]> {
     if (!goal) return [];
 
     try {
-      const response = await this.ai.models.generateContent({
+      const ai = this.getAI();
+      const response = await ai.models.generateContent({
         model: this.modelId,
         contents: `I have a project goal: "${goal}". Generate a list of 3-5 concrete, actionable Kanban tasks to achieve this.`,
         config: {
@@ -54,7 +61,8 @@ export class GeminiService {
 
   async breakDownTask(taskTitle: string, taskDescription: string): Promise<{ subtasks: string[] }> {
     try {
-      const response = await this.ai.models.generateContent({
+      const ai = this.getAI();
+      const response = await ai.models.generateContent({
         model: this.modelId,
         contents: `Break down this task into 3-6 smaller sub-steps: Title: "${taskTitle}", Description: "${taskDescription}"`,
         config: {
@@ -75,8 +83,8 @@ export class GeminiService {
       if (!text) return { subtasks: [] };
       return JSON.parse(text) as { subtasks: string[] };
     } catch (error) {
-       console.error("Gemini API Error (Breakdown):", error);
-       throw error;
+      console.error("Gemini API Error (Breakdown):", error);
+      throw error;
     }
   }
 }
