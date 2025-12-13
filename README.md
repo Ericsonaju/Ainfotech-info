@@ -1,20 +1,71 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Ainfotech Info - Kanban Flow Service Desk
 
-# Run and deploy your AI Studio app
+Sistema de gerenciamento de serviços com interface Kanban.
 
-This contains everything you need to run your app locally.
+## 🚀 Deploy na Vercel
 
-View your app in AI Studio: https://ai.studio/apps/drive/1SpVa2bSE02Xr5qSBilmt_ouCt41SYGfB
+Este projeto está configurado para deploy na Vercel. Siga os passos:
 
-## Run Locally
+### Via GitHub (Recomendado)
 
-**Prerequisites:**  Node.js
+1. Faça push deste projeto para o seu repositório GitHub
+2. Acesse [vercel.com](https://vercel.com) e faça login
+3. Clique em "Add New Project"
+4. Importe o repositório do GitHub
+5. Configure as variáveis de ambiente (se necessário):
+   - `GEMINI_API_KEY` - Sua chave da API Gemini
+   - `VITE_SUPABASE_URL` - URL do seu projeto Supabase
+   - `VITE_SUPABASE_ANON_KEY` - Chave anônima do Supabase
+6. Clique em "Deploy"
 
+### Configurações Detectadas Automaticamente
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- **Framework:** Vite
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- **Install Command:** `npm install`
+
+## 💻 Desenvolvimento Local
+
+**Pré-requisitos:** Node.js 18+
+
+1. Instale as dependências:
+
+   ```bash
+   npm install
+   ```
+
+2. Configure as variáveis de ambiente criando um arquivo `.env.local`:
+
+   ```
+   GEMINI_API_KEY=sua_chave_aqui
+   VITE_SUPABASE_URL=sua_url_supabase
+   VITE_SUPABASE_ANON_KEY=sua_chave_anon
+   ```
+
+3. Execute o servidor de desenvolvimento:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Acesse `http://localhost:3000`
+
+## 📦 Build de Produção
+
+```bash
+npm run build
+```
+
+Os arquivos de produção serão gerados na pasta `dist/`.
+
+## 🛠️ Tecnologias
+
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Supabase
+- Recharts
+- Lucide Icons
+- Google Gemini AI
