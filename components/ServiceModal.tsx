@@ -192,18 +192,45 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
         } finally { setIsDiagnosing(false); }
     };
 
+    // --- COMPRESSÃO OTIMIZADA DE IMAGENS ---
+    // Reduz tamanho para economizar espaço no banco (max 800px, qualidade 0.5)
     const compressImage = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
-            const reader = new FileReader(); reader.readAsDataURL(file);
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onerror = () => reject('Erro ao ler arquivo');
             reader.onload = (event) => {
-                const img = new Image(); img.src = event.target?.result as string;
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onerror = () => reject('Erro ao carregar imagem');
                 img.onload = () => {
-                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                    if (!ctx) { reject(); return; }
-                    const MAX_WIDTH = 1024; const MAX_HEIGHT = 1024; let width = img.width; let height = img.height;
-                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                    canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) { reject('Canvas não suportado'); return; }
+
+                    // Dimensão máxima reduzida para economia de espaço
+                    const MAX_SIZE = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Calcula nova dimensão mantendo proporção
+                    if (width > height) {
+                        if (width > MAX_SIZE) { height = Math.round(height * MAX_SIZE / width); width = MAX_SIZE; }
+                    } else {
+                        if (height > MAX_SIZE) { width = Math.round(width * MAX_SIZE / height); height = MAX_SIZE; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // Aplica suavização para melhor qualidade em tamanhos pequenos
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Qualidade 0.5 = ~50KB-100KB por foto (boa para documentação)
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.5);
+                    resolve(compressedData);
                 };
             };
         });
@@ -211,13 +238,28 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file && (formData?.photos?.length || 0) < 4) {
+        if (!file) return;
+
+        // Limite de 6 fotos para documentação completa
+        const MAX_PHOTOS = 6;
+        const currentCount = formData?.photos?.length || 0;
+
+        if (currentCount >= MAX_PHOTOS) {
+            showToast('Limite Atingido', `Máximo de ${MAX_PHOTOS} fotos permitido.`, 'warning');
+            return;
+        }
+
+        try {
+            showToast('Processando...', 'Comprimindo imagem...', 'info');
             const compressedBase64 = await compressImage(file);
             setFormData(prev => prev ? ({ ...prev, photos: [...(prev.photos || []), compressedBase64] }) : null);
-            showToast('Foto Adicionada', 'Imagem anexada com sucesso.', 'success');
-        } else if ((formData?.photos?.length || 0) >= 4) {
-            showToast('Limite Atingido', 'Máximo de 4 fotos permitido.', 'warning');
+            showToast('Foto Adicionada', `Imagem ${currentCount + 1}/${MAX_PHOTOS} anexada.`, 'success');
+        } catch (error) {
+            showToast('Erro', 'Não foi possível processar a imagem.', 'error');
         }
+
+        // Limpa o input para permitir selecionar a mesma foto novamente
+        e.target.value = '';
     };
 
     const removePhoto = (index: number) => setFormData(prev => prev ? ({ ...prev, photos: [...(prev.photos || [])].filter((_, i) => i !== index) }) : null);
@@ -300,7 +342,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
             {isSigningTech && (
                 <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/80 p-4">
                     <div className="glass-panel bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md p-6 animate-in zoom-in-95">
-                        <div className="flex justify-between items-center mb-4"><h3 className="text-white font-bold">Assinatura do Técnico</h3><button onClick={() => setIsSigningTech(false)}><X className="text-slate-400" /></button></div>
+                        <div className="flex justify-between items-center mb-4"><h3 className="text-white font-bold">Assinatura do Técnico</h3><button onClick={() => setIsSigningTech(false)} title="Fechar" aria-label="Fechar modal de assinatura"><X className="text-slate-400" /></button></div>
                         <div className="bg-white rounded-xl overflow-hidden mb-4 border-2 border-slate-600"><SignaturePad onChange={handleTechSignatureChange} /></div>
                         <button onClick={() => setIsSigningTech(false)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-500 transition-colors">Confirmar Assinatura</button>
                     </div>
@@ -676,7 +718,7 @@ Atenciosamente,
                                                 <span className="hidden sm:inline">Adicionar Foto</span>
                                                 <span className="sm:hidden">+ Foto</span>
                                             </button>
-                                            <input type="file" ref={fileInputRef} className="hidden" onChange={handlePhotoUpload} accept="image/*" capture="environment" />
+                                            <input type="file" ref={fileInputRef} className="hidden" onChange={handlePhotoUpload} accept="image/*" aria-label="Selecionar foto do equipamento" />
                                         </div>
 
                                         {/* Grid de Fotos */}
@@ -734,27 +776,6 @@ Atenciosamente,
                                             <button onClick={() => setIsSigningTech(true)} className={`w-full flex justify-center items-center gap-2 px-4 py-3 rounded-lg text-xs font-bold border transition-colors ${formData.techSignature ? 'bg-green-900/20 border-green-500 text-green-400' : 'bg-slate-800 border-slate-600 text-slate-400 hover:text-white'}`}>
                                                 <PenTool size={14} /> {formData.techSignature ? 'Laudo Assinado' : 'Assinar Laudo Técnico'}
                                             </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="glass-panel p-4 md:p-6 rounded-2xl border border-slate-700/50">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Evidências (Fotos)</h3>
-                                            <button onClick={() => fileInputRef.current?.click()} className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold transition-colors">+ Adicionar</button>
-                                            <input type="file" ref={fileInputRef} className="hidden" onChange={handlePhotoUpload} accept="image/*" />
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {(formData.photos || []).map((photo, idx) => (
-                                                <div key={idx} className="relative aspect-video bg-black rounded-xl border border-slate-700 overflow-hidden group">
-                                                    <img src={photo} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                                                    <button onClick={() => removePhoto(idx)} className="absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all md:transform md:hover:scale-110"><Trash2 size={12} /></button>
-                                                </div>
-                                            ))}
-                                            {(formData.photos || []).length === 0 && (
-                                                <div className="col-span-full py-8 text-center text-slate-500 text-sm border-2 border-dashed border-slate-800 rounded-xl">
-                                                    Nenhuma foto anexada.
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>

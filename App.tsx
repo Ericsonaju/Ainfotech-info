@@ -14,33 +14,50 @@ import { Layout, Plus, LogOut, BarChart3, Kanban, Loader2, Search, Terminal, Ale
 import { taskService } from './services/taskService';
 import { supabase } from './services/supabase';
 
-// --- DEBUG LOGGER UTILS ---
-const LOG_BUFFER: string[] = [];
+// --- DEBUG LOGGER - DESATIVADO EM PRODUÇÃO ---
+const IS_PRODUCTION = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+const DEBUG_ENABLED = !IS_PRODUCTION || localStorage.getItem('DEBUG_MODE') === 'true';
+
+// Guarda referências originais
 const originalLog = console.log;
 const originalError = console.error;
+const originalWarn = console.warn;
 
-function addToLogBuffer(type: string, args: any[]) {
-    try {
-        const msg = args.map(a => 
-            typeof a === 'object' ? JSON.stringify(a, (key, value) => {
-                if (key === 'auth') return '[Auth Object]'; 
-                return value;
-            }) : String(a)
-        ).join(' ');
-        const line = `[${new Date().toLocaleTimeString()}] [${type}] ${msg}`;
-        LOG_BUFFER.push(line);
-        if (LOG_BUFFER.length > 50) LOG_BUFFER.shift();
-    } catch (e) { }
+// Em produção, substitui por funções vazias (silencia logs)
+if (IS_PRODUCTION && !DEBUG_ENABLED) {
+  console.log = () => { };
+  console.warn = () => { };
+  // Mantém console.error para erros críticos
 }
 
-console.log = (...args) => { addToLogBuffer('LOG', args); if(originalLog) originalLog(...args); };
-console.error = (...args) => { addToLogBuffer('ERR', args); if(originalError) originalError(...args); };
+// Buffer de logs para debug interno (útil em desenvolvimento)
+const LOG_BUFFER: string[] = [];
+function addToLogBuffer(type: string, args: any[]) {
+  if (!DEBUG_ENABLED) return;
+  try {
+    const msg = args.map(a =>
+      typeof a === 'object' ? JSON.stringify(a, (key, value) => {
+        if (key === 'auth') return '[Auth Object]';
+        return value;
+      }) : String(a)
+    ).join(' ');
+    const line = `[${new Date().toLocaleTimeString()}] [${type}] ${msg}`;
+    LOG_BUFFER.push(line);
+    if (LOG_BUFFER.length > 50) LOG_BUFFER.shift();
+  } catch (e) { }
+}
+
+// Wrapper para adicionar ao buffer (só em dev)
+if (DEBUG_ENABLED) {
+  console.log = (...args) => { addToLogBuffer('LOG', args); if (originalLog) originalLog(...args); };
+  console.error = (...args) => { addToLogBuffer('ERR', args); if (originalError) originalError(...args); };
+}
 // --------------------------
 
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // App Configuration State
   const [diagnosticFee, setDiagnosticFee] = useState<number>(CONFIG.diagnosticFee);
 
@@ -49,7 +66,7 @@ export default function App() {
   const [currentClientTask, setCurrentClientTask] = useState<Task | null>(null);
   const [adminView, setAdminView] = useState<'kanban' | 'dashboard'>('kanban');
   const [isInitializing, setIsInitializing] = useState(true);
-  
+
   // Navigation State (Landing vs Login)
   const [showLoginScreen, setShowLoginScreen] = useState(false);
 
@@ -61,7 +78,7 @@ export default function App() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // Drag and Drop State
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
 
@@ -81,16 +98,16 @@ export default function App() {
   useEffect(() => {
     const savedFee = localStorage.getItem('app_diagnostic_fee');
     if (savedFee) {
-        const parsed = parseFloat(savedFee);
-        if (!isNaN(parsed)) setDiagnosticFee(parsed);
+      const parsed = parseFloat(savedFee);
+      if (!isNaN(parsed)) setDiagnosticFee(parsed);
     }
   }, []);
 
   // Handler to update fee
   const handleUpdateFee = (newFee: number) => {
-      setDiagnosticFee(newFee);
-      localStorage.setItem('app_diagnostic_fee', newFee.toString());
-      showToast('Configuração Salva', `Taxa de diagnóstico atualizada para R$ ${newFee.toFixed(2)}`, 'success');
+    setDiagnosticFee(newFee);
+    localStorage.setItem('app_diagnostic_fee', newFee.toString());
+    showToast('Configuração Salva', `Taxa de diagnóstico atualizada para R$ ${newFee.toFixed(2)}`, 'success');
   };
 
   // Load Tasks from Supabase
@@ -117,12 +134,12 @@ export default function App() {
 
   // --- DEBUG LOG SYNC ---
   useEffect(() => {
-      const interval = setInterval(() => {
-          if (showDebug || isInitializing) {
-            setDebugLogs([...LOG_BUFFER]);
-          }
-      }, 500);
-      return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (showDebug || isInitializing) {
+        setDebugLogs([...LOG_BUFFER]);
+      }
+    }, 500);
+    return () => clearInterval(interval);
   }, [showDebug, isInitializing]);
 
   // --- INITIALIZATION LOGIC & AUTH LISTENER ---
@@ -131,39 +148,39 @@ export default function App() {
     let mounted = true;
 
     const initApp = async () => {
-        try {
-            const { data, error } = await supabase.auth.getSession();
-            
-            if (mounted && data?.session) {
-                console.log("Sessão encontrada.");
-                setCurrentUser('admin');
-                setShowLoginScreen(true); // Se já está logado, mostra o app (que depende dessa flag indiretamente ou entra no if currentUser)
-            } else {
-                console.log("Nenhuma sessão ativa.");
-            }
-        } catch (err: any) {
-            console.warn("Falha na inicialização:", err.message);
-        } finally {
-            if (mounted) setIsInitializing(false);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+
+        if (mounted && data?.session) {
+          console.log("Sessão encontrada.");
+          setCurrentUser('admin');
+          setShowLoginScreen(true); // Se já está logado, mostra o app (que depende dessa flag indiretamente ou entra no if currentUser)
+        } else {
+          console.log("Nenhuma sessão ativa.");
         }
+      } catch (err: any) {
+        console.warn("Falha na inicialização:", err.message);
+      } finally {
+        if (mounted) setIsInitializing(false);
+      }
     };
 
     // Listen for auth changes (token expiry, logout from other tabs)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT') {
-            setCurrentUser(null);
-            setTasks([]);
-            setShowLoginScreen(false); // Voltar para Landing Page ao deslogar
-        } else if (event === 'SIGNED_IN' && session) {
-            setCurrentUser('admin');
-            setShowLoginScreen(true);
-        }
+      if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        setTasks([]);
+        setShowLoginScreen(false); // Voltar para Landing Page ao deslogar
+      } else if (event === 'SIGNED_IN' && session) {
+        setCurrentUser('admin');
+        setShowLoginScreen(true);
+      }
     });
 
     initApp();
-    return () => { 
-        mounted = false; 
-        subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -193,7 +210,7 @@ export default function App() {
 
   const handleLogout = async () => {
     if (currentUser === 'admin') {
-      try { await supabase.auth.signOut(); } catch(e) { console.error(e); }
+      try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
     }
     setCurrentUser(null);
     setCurrentClientTask(null);
@@ -219,25 +236,25 @@ export default function App() {
     if (!draggedTaskId) return;
 
     const originalTasks = [...tasks];
-    setTasks(prev => prev.map(t => 
+    setTasks(prev => prev.map(t =>
       t.id === draggedTaskId ? { ...t, columnId: targetColumnId } : t
     ));
 
     try {
       const taskToUpdate = tasks.find(t => t.id === draggedTaskId);
       if (taskToUpdate) {
-          if (taskToUpdate.columnId !== targetColumnId) {
-             const colName = COLUMNS.find(c => c.id === targetColumnId)?.title;
-             showToast('Tarefa Movida', `Para: ${colName}`, 'info');
-          }
+        if (taskToUpdate.columnId !== targetColumnId) {
+          const colName = COLUMNS.find(c => c.id === targetColumnId)?.title;
+          showToast('Tarefa Movida', `Para: ${colName}`, 'info');
+        }
 
-          // If moving an AI generated task that isn't saved yet, create it now
-          if (taskToUpdate.id.startsWith('gen-')) {
-             const createdTask = await taskService.createTask({ ...taskToUpdate, columnId: targetColumnId });
-             setTasks(prev => prev.map(t => t.id === draggedTaskId ? createdTask : t));
-          } else {
-             await taskService.updateTask({ ...taskToUpdate, columnId: targetColumnId });
-          }
+        // If moving an AI generated task that isn't saved yet, create it now
+        if (taskToUpdate.id.startsWith('gen-')) {
+          const createdTask = await taskService.createTask({ ...taskToUpdate, columnId: targetColumnId });
+          setTasks(prev => prev.map(t => t.id === draggedTaskId ? createdTask : t));
+        } else {
+          await taskService.updateTask({ ...taskToUpdate, columnId: targetColumnId });
+        }
       }
     } catch (e: any) {
       setTasks(originalTasks);
@@ -252,19 +269,19 @@ export default function App() {
     setSelectedTask(null);
     const originalTasks = [...tasks];
     setTasks(currentTasks => currentTasks.filter(t => t.id !== id));
-    
+
     // If it's a generated task that wasn't saved to DB yet, just remove from state
     if (id.startsWith('gen-')) {
-        showToast('Removido', 'Tarefa rascunho removida.', 'info');
-        return;
+      showToast('Removido', 'Tarefa rascunho removida.', 'info');
+      return;
     }
 
     try {
       await taskService.deleteTask(id);
       showToast('Excluído', 'O.S. removida.', 'success');
     } catch (e: any) {
-        setTasks(originalTasks);
-        showToast('Erro', e.message, 'error');
+      setTasks(originalTasks);
+      showToast('Erro', e.message, 'error');
     }
   };
 
@@ -275,22 +292,22 @@ export default function App() {
     if (currentUser === 'client' && currentClientTask?.id === updatedTask.id) {
       setCurrentClientTask(updatedTask);
     }
-    
+
     // Optimistic Update
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-    
+
     try {
       let savedTask;
       // If task ID is virtual (AI Generated), create it instead of updating
       if (updatedTask.id.startsWith('gen-')) {
-          savedTask = await taskService.createTask(updatedTask);
-          showToast('O.S. Gerada', `O.S. ${savedTask.osNumber} criada com sucesso.`, 'success');
+        savedTask = await taskService.createTask(updatedTask);
+        showToast('O.S. Gerada', `O.S. ${savedTask.osNumber} criada com sucesso.`, 'success');
       } else {
-          savedTask = await taskService.updateTask(updatedTask);
-          if (statusChanged) {
-              const colName = COLUMNS.find(c => c.id === updatedTask.columnId)?.title;
-              showToast('Status Atualizado', `Movido para: ${colName}`, 'info');
-          }
+        savedTask = await taskService.updateTask(updatedTask);
+        if (statusChanged) {
+          const colName = COLUMNS.find(c => c.id === updatedTask.columnId)?.title;
+          showToast('Status Atualizado', `Movido para: ${colName}`, 'info');
+        }
       }
       // Replace the virtual ID with real ID in state
       setTasks(prev => prev.map(t => t.id === updatedTask.id ? savedTask : t));
@@ -304,7 +321,7 @@ export default function App() {
     const timestampSuffix = now.toString().slice(-4);
     const randomSuffix = Math.floor(Math.random() * 999).toString().padStart(3, '0');
     const newOsNumber = `OS-${timestampSuffix}${randomSuffix}`;
-    
+
     const newTaskStub: Task = {
       id: '',
       osNumber: newOsNumber,
@@ -331,26 +348,26 @@ export default function App() {
 
     setLoading(true);
     try {
-        const createdTask = await taskService.createTask(newTaskStub);
-        setTasks(prev => [...prev, createdTask]);
-        setSelectedTask(createdTask);
-        setIsServiceModalOpen(true);
-        showToast('O.S. Criada', `Ordem de serviço ${createdTask.osNumber} iniciada.`, 'success');
+      const createdTask = await taskService.createTask(newTaskStub);
+      setTasks(prev => [...prev, createdTask]);
+      setSelectedTask(createdTask);
+      setIsServiceModalOpen(true);
+      showToast('O.S. Criada', `Ordem de serviço ${createdTask.osNumber} iniciada.`, 'success');
     } catch (e: any) {
-        showToast('Erro', e.message, 'error');
+      showToast('Erro', e.message, 'error');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   const handleAiTasksGenerated = (newTasks: Task[]) => {
-      setTasks(prev => [...prev, ...newTasks]);
-      showToast('IA', `${newTasks.length} sugestões geradas. Arraste ou edite para salvar.`, 'success');
+    setTasks(prev => [...prev, ...newTasks]);
+    showToast('IA', `${newTasks.length} sugestões geradas. Arraste ou edite para salvar.`, 'success');
   };
 
   const openServiceModal = (task: Task) => {
-      setSelectedTask(task);
-      setIsServiceModalOpen(true);
+    setSelectedTask(task);
+    setIsServiceModalOpen(true);
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -365,24 +382,24 @@ export default function App() {
   });
 
   if (isInitializing) {
-      return (
-          <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4 relative">
-              <Loader2 className="animate-spin text-blue-500" size={48} />
-              <p className="text-slate-400 font-medium animate-pulse">Iniciando Sistema...</p>
-              {showDebug && (
-                  <div className="absolute bottom-10 left-4 right-4 bg-black/90 p-4 rounded-lg border border-red-900 max-h-[200px] overflow-y-auto font-mono text-[10px] text-green-400">
-                      {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
-                  </div>
-              )}
+    return (
+      <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4 relative">
+        <Loader2 className="animate-spin text-blue-500" size={48} />
+        <p className="text-slate-400 font-medium animate-pulse">Iniciando Sistema...</p>
+        {showDebug && (
+          <div className="absolute bottom-10 left-4 right-4 bg-black/90 p-4 rounded-lg border border-red-900 max-h-[200px] overflow-y-auto font-mono text-[10px] text-green-400">
+            {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
           </div>
-      );
+        )}
+      </div>
+    );
   }
 
   // --- ROUTING LOGIC ---
 
   // 1. Landing Page (Default if not logged in and not showing login screen)
   if (!currentUser && !showLoginScreen) {
-      return <LandingPage onEnterSystem={() => setShowLoginScreen(true)} />;
+    return <LandingPage onEnterSystem={() => setShowLoginScreen(true)} />;
   }
 
   // 2. Client Portal (Logged in as Client)
@@ -390,12 +407,12 @@ export default function App() {
     return (
       <>
         <Toast toasts={toasts} removeToast={removeToast} />
-        <ClientPortal 
-            task={currentClientTask} 
-            onUpdate={updateTask} 
-            onLogout={handleLogout} 
-            showToast={showToast} 
-            diagnosticFee={diagnosticFee}
+        <ClientPortal
+          task={currentClientTask}
+          onUpdate={updateTask}
+          onLogout={handleLogout}
+          showToast={showToast}
+          diagnosticFee={diagnosticFee}
         />
       </>
     );
@@ -406,28 +423,28 @@ export default function App() {
     return (
       <>
         <Toast toasts={toasts} removeToast={removeToast} />
-        
+
         {/* Botão para voltar à Home (Landing Page) */}
-        <button 
-            onClick={() => setShowLoginScreen(false)} 
-            className="fixed top-4 left-4 z-50 p-2 bg-slate-800/50 text-slate-300 hover:text-white rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-700"
+        <button
+          onClick={() => setShowLoginScreen(false)}
+          className="fixed top-4 left-4 z-50 p-2 bg-slate-800/50 text-slate-300 hover:text-white rounded-lg flex items-center gap-2 transition-colors hover:bg-slate-700"
         >
-             <Home size={20} /> <span className="text-sm font-medium">Voltar ao Início</span>
+          <Home size={20} /> <span className="text-sm font-medium">Voltar ao Início</span>
         </button>
 
         <LoginScreen onAdminLogin={handleAdminLogin} onClientLogin={handleClientLogin} />
-        
+
         <button onClick={() => setShowDebug(!showDebug)} className="fixed bottom-2 left-2 p-2 text-slate-800 hover:text-white z-50 opacity-20 hover:opacity-100 transition-opacity">
-            <Terminal size={16} />
+          <Terminal size={16} />
         </button>
         {showDebug && (
-             <div className="fixed bottom-0 left-0 w-full bg-black/95 text-green-500 font-mono text-xs p-4 h-64 overflow-y-auto z-40 border-t border-green-900">
-                 <div className="flex justify-between sticky top-0 bg-black border-b border-green-900 pb-2 mb-2">
-                     <strong>CONSOLE DE DEPURAÇÃO</strong>
-                     <button onClick={() => setShowDebug(false)} className="text-red-500 font-bold">FECHAR</button>
-                 </div>
-                 {debugLogs.map((log, i) => <div key={i} className="border-b border-gray-900 py-0.5">{log}</div>)}
-             </div>
+          <div className="fixed bottom-0 left-0 w-full bg-black/95 text-green-500 font-mono text-xs p-4 h-64 overflow-y-auto z-40 border-t border-green-900">
+            <div className="flex justify-between sticky top-0 bg-black border-b border-green-900 pb-2 mb-2">
+              <strong>CONSOLE DE DEPURAÇÃO</strong>
+              <button onClick={() => setShowDebug(false)} className="text-red-500 font-bold">FECHAR</button>
+            </div>
+            {debugLogs.map((log, i) => <div key={i} className="border-b border-gray-900 py-0.5">{log}</div>)}
+          </div>
         )}
       </>
     );
@@ -435,21 +452,21 @@ export default function App() {
 
   // 4. Loading State (Usually during login transitions)
   if (loading && !currentUser) {
-      return (
-          <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
-               <Loader2 className="animate-spin text-blue-500" size={48} />
-          </div>
-      );
+    return (
+      <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-4">
+        <Loader2 className="animate-spin text-blue-500" size={48} />
+      </div>
+    );
   }
 
   // 5. Admin Dashboard (Logged in as Admin)
   return (
     <div className="h-screen w-screen flex flex-col bg-[#0f172a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black text-slate-200 font-sans selection:bg-blue-500/30 overflow-hidden">
       <Toast toasts={toasts} removeToast={removeToast} />
-      
+
       {/* HEADER RESPONSIVO */}
       <header className="h-14 md:h-16 border-b border-white/5 flex items-center justify-between px-4 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 flex-none">
-        
+
         {/* 1. LEFT: LOGO & TITLE */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-900/20">
@@ -464,44 +481,44 @@ export default function App() {
         {/* 2. CENTER: SEARCH (Hidden on mobile) */}
         {adminView === 'kanban' && (
           <div className="flex-1 max-w-md mx-4 hidden md:block">
-             <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={16} />
-                <input 
-                  type="text"
-                  placeholder="Buscar O.S., Cliente..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg py-1.5 pl-10 pr-4 text-sm text-slate-200 focus:outline-none focus:border-blue-500 focus:bg-slate-800 transition-all placeholder-slate-500"
-                />
-             </div>
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={16} />
+              <input
+                type="text"
+                placeholder="Buscar O.S., Cliente..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg py-1.5 pl-10 pr-4 text-sm text-slate-200 focus:outline-none focus:border-blue-500 focus:bg-slate-800 transition-all placeholder-slate-500"
+              />
+            </div>
           </div>
         )}
 
         {/* 3. RIGHT: ACTIONS */}
         <div className="flex items-center gap-2 md:gap-3">
-           
-           {/* View Toggles */}
-           <div className="flex bg-slate-800/50 p-1 rounded-lg border border-white/5">
-               <button 
-                  onClick={() => setAdminView('kanban')}
-                  className={`p-1.5 md:px-3 md:py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${adminView === 'kanban' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-                  title="Visualização Kanban"
-               >
-                   <Kanban size={18} /> <span className="hidden lg:inline">Quadro</span>
-               </button>
-               <button 
-                  onClick={() => setAdminView('dashboard')}
-                  className={`p-1.5 md:px-3 md:py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${adminView === 'dashboard' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-                  title="Relatórios"
-               >
-                   <BarChart3 size={18} /> <span className="hidden lg:inline">Relatórios</span>
-               </button>
+
+          {/* View Toggles */}
+          <div className="flex bg-slate-800/50 p-1 rounded-lg border border-white/5">
+            <button
+              onClick={() => setAdminView('kanban')}
+              className={`p-1.5 md:px-3 md:py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${adminView === 'kanban' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              title="Visualização Kanban"
+            >
+              <Kanban size={18} /> <span className="hidden lg:inline">Quadro</span>
+            </button>
+            <button
+              onClick={() => setAdminView('dashboard')}
+              className={`p-1.5 md:px-3 md:py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${adminView === 'dashboard' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              title="Relatórios"
+            >
+              <BarChart3 size={18} /> <span className="hidden lg:inline">Relatórios</span>
+            </button>
           </div>
 
           <div className="h-6 w-px bg-slate-700/50 mx-1 hidden md:block"></div>
 
           {/* New OS Button */}
-          <button 
+          <button
             type="button"
             onClick={(e) => {
               e.preventDefault();
@@ -513,7 +530,7 @@ export default function App() {
             <Plus size={20} />
             <span className="hidden md:inline">Nova O.S.</span>
           </button>
-          
+
           {/* Logout */}
           <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800" title="Sair">
             <LogOut size={20} />
@@ -523,36 +540,36 @@ export default function App() {
 
       <main className="flex-1 w-full overflow-x-auto overflow-y-hidden bg-slate-950/30 custom-scrollbar pb-2 relative scroll-smooth overscroll-x-contain">
         {adminView === 'kanban' ? (
-             <div className="inline-flex h-full items-start gap-4 md:gap-6 p-4 md:p-6 min-w-full snap-x snap-mandatory">
-                {COLUMNS.map(col => (
-                    <Column 
-                        key={col.id}
-                        id={col.id}
-                        title={col.title}
-                        color={col.color}
-                        tasks={filteredTasks.filter(t => t.columnId === col.id)}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                        onTaskClick={openServiceModal}
-                        onAddTask={handleCreateNewOS}
-                    />
-                ))}
-                {/* Espaçador final para garantir que a última coluna não fique colada na borda */}
-                <div className="w-4 shrink-0 h-full" />
-            </div>
+          <div className="inline-flex h-full items-start gap-4 md:gap-6 p-4 md:p-6 min-w-full snap-x snap-mandatory">
+            {COLUMNS.map(col => (
+              <Column
+                key={col.id}
+                id={col.id}
+                title={col.title}
+                color={col.color}
+                tasks={filteredTasks.filter(t => t.columnId === col.id)}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onTaskClick={openServiceModal}
+                onAddTask={handleCreateNewOS}
+              />
+            ))}
+            {/* Espaçador final para garantir que a última coluna não fique colada na borda */}
+            <div className="w-4 shrink-0 h-full" />
+          </div>
         ) : (
-            <div className="container mx-auto max-w-7xl h-full overflow-y-auto custom-scrollbar">
-                <AdminDashboard 
-                    tasks={tasks} 
-                    currentFee={diagnosticFee}
-                    onUpdateFee={handleUpdateFee}
-                />
-            </div>
+          <div className="container mx-auto max-w-7xl h-full overflow-y-auto custom-scrollbar">
+            <AdminDashboard
+              tasks={tasks}
+              currentFee={diagnosticFee}
+              onUpdateFee={handleUpdateFee}
+            />
+          </div>
         )}
       </main>
 
-      <ServiceModal 
+      <ServiceModal
         isOpen={isServiceModalOpen}
         onClose={() => setIsServiceModalOpen(false)}
         task={selectedTask}
@@ -564,7 +581,7 @@ export default function App() {
         showToast={showToast}
         diagnosticFee={diagnosticFee}
       />
-      
+
       {/* AI GENERATOR FLOATING BUTTON */}
       {adminView === 'kanban' && <AIGenerator onTasksGenerated={handleAiTasksGenerated} />}
     </div>
