@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Task, Priority, ChecklistItem, ChatMessage, ColumnType } from '../types';
 import { COLUMNS, CONFIG, PREDEFINED_SERVICES } from '../constants';
-import { X, Send, User, Smartphone, Monitor, AlertTriangle, CheckSquare, Sparkles, DollarSign, Camera, Image as ImageIcon, ClipboardList, PenTool, Printer, ChevronDown, ChevronUp, Plus, Trash2, ArrowRight, CheckCircle2, Calendar, LayoutList, Signal, FileText, Download, MapPin, CreditCard, ShoppingBag, Clock, Menu, MessageCircle } from 'lucide-react';
+import { X, Send, User, Smartphone, Monitor, AlertTriangle, CheckSquare, Sparkles, DollarSign, Camera, Image as ImageIcon, ClipboardList, PenTool, Printer, ChevronDown, ChevronUp, Plus, Trash2, ArrowRight, CheckCircle2, Calendar, LayoutList, Signal, FileText, Download, MapPin, CreditCard, ShoppingBag, Clock, Menu, MessageCircle, XCircle } from 'lucide-react';
 import { geminiService } from '../services/geminiService';
 import ClientPortal, { PdfInvoiceTemplate } from './ClientPortal';
 import SignaturePad from './SignaturePad';
@@ -164,6 +164,90 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
         if (val === undefined || val === null) return '0,00';
         return Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
+
+    // --- MÁSCARAS E VALIDAÇÕES BRASILEIRAS ---
+
+    // Máscara de telefone: (99) 99999-9999 ou (99) 9999-9999
+    const formatPhone = (value: string): string => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+        if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    };
+
+    // Máscara de CPF/CNPJ: detecta automaticamente
+    const formatCpfCnpj = (value: string): string => {
+        const digits = value.replace(/\D/g, '');
+        if (digits.length <= 11) {
+            // CPF: 000.000.000-00
+            if (digits.length <= 3) return digits;
+            if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+            if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+            return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+        } else {
+            // CNPJ: 00.000.000/0000-00
+            const cnpjDigits = digits.slice(0, 14);
+            if (cnpjDigits.length <= 2) return cnpjDigits;
+            if (cnpjDigits.length <= 5) return `${cnpjDigits.slice(0, 2)}.${cnpjDigits.slice(2)}`;
+            if (cnpjDigits.length <= 8) return `${cnpjDigits.slice(0, 2)}.${cnpjDigits.slice(2, 5)}.${cnpjDigits.slice(5)}`;
+            if (cnpjDigits.length <= 12) return `${cnpjDigits.slice(0, 2)}.${cnpjDigits.slice(2, 5)}.${cnpjDigits.slice(5, 8)}/${cnpjDigits.slice(8)}`;
+            return `${cnpjDigits.slice(0, 2)}.${cnpjDigits.slice(2, 5)}.${cnpjDigits.slice(5, 8)}/${cnpjDigits.slice(8, 12)}-${cnpjDigits.slice(12)}`;
+        }
+    };
+
+    // Validação de CPF (algoritmo com dígitos verificadores)
+    const isValidCpf = (cpf: string): boolean => {
+        const digits = cpf.replace(/\D/g, '');
+        if (digits.length !== 11) return false;
+        if (/^(\d)\1+$/.test(digits)) return false; // Todos dígitos iguais
+
+        let sum = 0;
+        for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
+        let remainder = (sum * 10) % 11;
+        if (remainder === 10 || remainder === 11) remainder = 0;
+        if (remainder !== parseInt(digits[9])) return false;
+
+        sum = 0;
+        for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i);
+        remainder = (sum * 10) % 11;
+        if (remainder === 10 || remainder === 11) remainder = 0;
+        return remainder === parseInt(digits[10]);
+    };
+
+    // Validação de CNPJ (algoritmo com dígitos verificadores)
+    const isValidCnpj = (cnpj: string): boolean => {
+        const digits = cnpj.replace(/\D/g, '');
+        if (digits.length !== 14) return false;
+        if (/^(\d)\1+$/.test(digits)) return false;
+
+        const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+        let sum = 0;
+        for (let i = 0; i < 12; i++) sum += parseInt(digits[i]) * weights1[i];
+        let remainder = sum % 11;
+        if (remainder < 2) { if (parseInt(digits[12]) !== 0) return false; }
+        else { if (parseInt(digits[12]) !== 11 - remainder) return false; }
+
+        sum = 0;
+        for (let i = 0; i < 13; i++) sum += parseInt(digits[i]) * weights2[i];
+        remainder = sum % 11;
+        if (remainder < 2) return parseInt(digits[13]) === 0;
+        return parseInt(digits[13]) === 11 - remainder;
+    };
+
+    // Verifica se CPF ou CNPJ é válido
+    const isValidCpfCnpj = (value: string): boolean => {
+        const digits = value.replace(/\D/g, '');
+        if (digits.length === 11) return isValidCpf(value);
+        if (digits.length === 14) return isValidCnpj(value);
+        return false;
+    };
+
+    // Handlers com máscara
+    const handlePhoneChange = (value: string) => handleInputChange('clientPhone', formatPhone(value));
+    const handleCpfCnpjChange = (value: string) => handleInputChange('clientCpf', formatCpfCnpj(value));
 
     const toggleChecklist = (id: string) => setFormData(prev => prev ? ({ ...prev, checklist: (prev.checklist || []).map(item => item.id === id ? { ...item, checked: !item.checked } : item) }) : null);
 
@@ -633,9 +717,10 @@ Atenciosamente,
                                                         : 'border-slate-700 focus:border-blue-500'
                                                         }`}
                                                     value={formData.clientPhone}
-                                                    onChange={(e) => handleInputChange('clientPhone', e.target.value)}
+                                                    onChange={(e) => handlePhoneChange(e.target.value)}
                                                     type="tel"
                                                     placeholder="(79) 99999-9999"
+                                                    maxLength={16}
                                                 />
                                                 <p className="text-[10px] text-slate-500">
                                                     {(() => {
@@ -648,8 +733,54 @@ Atenciosamente,
                                                 </p>
                                             </div>
                                             <div className="space-y-1.5 md:space-y-2">
-                                                <label className="text-xs text-slate-500 font-bold uppercase">CPF/CNPJ</label>
-                                                <input className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200" value={formData.clientCpf || ''} onChange={(e) => handleInputChange('clientCpf', e.target.value)} placeholder="000.000.000-00" type="tel" />
+                                                <label className="text-xs text-slate-500 font-bold uppercase flex items-center gap-2">
+                                                    CPF/CNPJ
+                                                    {(() => {
+                                                        const cpfCnpj = formData.clientCpf || '';
+                                                        const digits = cpfCnpj.replace(/\D/g, '');
+                                                        if (digits.length === 11 || digits.length === 14) {
+                                                            if (isValidCpfCnpj(cpfCnpj)) {
+                                                                return <CheckCircle2 size={12} className="text-green-400" />;
+                                                            }
+                                                            return <XCircle size={12} className="text-red-400" />;
+                                                        }
+                                                        return null;
+                                                    })()}
+                                                </label>
+                                                <input
+                                                    className={`w-full bg-slate-900 border rounded-xl p-3 text-sm text-slate-200 transition-all outline-none ${(() => {
+                                                        const cpfCnpj = formData.clientCpf || '';
+                                                        const digits = cpfCnpj.replace(/\D/g, '');
+                                                        if (digits.length === 11 || digits.length === 14) {
+                                                            return isValidCpfCnpj(cpfCnpj)
+                                                                ? 'border-green-500/50 focus:border-green-500'
+                                                                : 'border-red-500/50 focus:border-red-500';
+                                                        }
+                                                        return 'border-slate-700 focus:border-blue-500';
+                                                    })()}`}
+                                                    value={formData.clientCpf || ''}
+                                                    onChange={(e) => handleCpfCnpjChange(e.target.value)}
+                                                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                                                    type="tel"
+                                                    maxLength={18}
+                                                />
+                                                <p className="text-[10px] text-slate-500">
+                                                    {(() => {
+                                                        const cpfCnpj = formData.clientCpf || '';
+                                                        const digits = cpfCnpj.replace(/\D/g, '');
+                                                        if (digits.length === 11) {
+                                                            return isValidCpf(cpfCnpj)
+                                                                ? <span className="text-green-400">✓ CPF válido</span>
+                                                                : <span className="text-red-400">✗ CPF inválido</span>;
+                                                        }
+                                                        if (digits.length === 14) {
+                                                            return isValidCnpj(cpfCnpj)
+                                                                ? <span className="text-green-400">✓ CNPJ válido</span>
+                                                                : <span className="text-red-400">✗ CNPJ inválido</span>;
+                                                        }
+                                                        return digits.length > 0 ? `${digits.length}/11 dígitos` : 'Opcional - pessoa física ou jurídica';
+                                                    })()}
+                                                </p>
                                             </div>
                                             <div className="space-y-1.5 md:space-y-2 md:col-span-2">
                                                 <label className="text-xs text-slate-500 font-bold uppercase">Endereço Completo</label>
