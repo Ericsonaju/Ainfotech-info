@@ -165,7 +165,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
         return Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    const toggleChecklist = (id: string) => setFormData(prev => prev ? ({ ...prev, checklist: prev.checklist.map(item => item.id === id ? { ...item, checked: !item.checked } : item) }) : null);
+    const toggleChecklist = (id: string) => setFormData(prev => prev ? ({ ...prev, checklist: (prev.checklist || []).map(item => item.id === id ? { ...item, checked: !item.checked } : item) }) : null);
 
     const handleSendChat = (e: React.FormEvent) => {
         e.preventDefault();
@@ -481,7 +481,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                         <textarea className="w-full h-24 bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 resize-none mb-4 md:mb-6 focus:border-blue-500 outline-none" value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} placeholder="Descreva o problema relatado pelo cliente..." />
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
-                                            {formData.checklist.map(item => (
+                                            {(formData.checklist || []).map(item => (
                                                 <button key={item.id} onClick={() => toggleChecklist(item.id)} className={`text-xs p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${item.checked ? 'bg-green-500/10 border-green-500/50 text-green-400' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}>
                                                     <div className={`w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center ${item.checked ? 'bg-green-500 border-green-500' : 'border-slate-600'}`}>
                                                         {item.checked && <CheckCircle2 size={10} className="text-slate-900" />}
@@ -632,7 +632,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                                 <p className="text-sm">Nenhuma mensagem registrada.</p>
                                             </div>
                                         )}
-                                        {formData.chatHistory.map(msg => (
+                                        {(formData.chatHistory || []).map(msg => (
                                             <div key={msg.id} className={`flex flex-col ${msg.sender === 'tech' ? 'items-end' : 'items-start'}`}>
                                                 <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === 'tech' ? 'bg-blue-600 text-white rounded-br-none' : msg.sender === 'system' ? 'bg-slate-700/50 text-slate-400 text-xs italic border border-slate-700' : 'bg-slate-700 text-slate-200 rounded-bl-none'}`}>
                                                     {msg.message}

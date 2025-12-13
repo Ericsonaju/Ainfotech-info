@@ -108,7 +108,7 @@ export const PdfInvoiceTemplate: React.FC<PdfTemplateProps> = ({ task, mode, onR
 
                 {/* Checklist Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px', marginBottom: '15px' }}>
-                    {task.checklist.map(item => (
+                    {(task.checklist || []).map(item => (
                         <div key={item.id} style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '5px', color: '#000' }}>
                             <div style={{
                                 width: '12px', height: '12px',
@@ -495,7 +495,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, s
                             <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
                                 <label className="text-xs text-slate-500 uppercase font-bold flex gap-2 mb-3"><CheckSquare size={14} /> Checklist de Entrada</label>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                    {task.checklist.map(item => (
+                                    {(task.checklist || []).map(item => (
                                         <div key={item.id} className={`text-xs px-2 py-1 rounded border flex items-center gap-2 ${item.checked ? 'bg-green-900/20 border-green-800 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
                                             {item.checked ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 border border-slate-600 rounded-full"></div>}
                                             {item.label}
@@ -566,7 +566,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, s
                         <div className="glass-panel rounded-2xl flex flex-col h-[400px]">
                             <div className="p-4 border-b border-white/5 bg-slate-800/50"><h3 className="font-bold text-white text-sm">Fale com o Técnico</h3></div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/30 custom-scrollbar">
-                                {task.chatHistory.map(msg => (
+                                {(task.chatHistory || []).map(msg => (
                                     <div key={msg.id} className={`flex flex-col ${msg.sender === 'client' ? 'items-end' : 'items-start'}`}>
                                         <div className={`max-w-[85%] p-3 text-sm rounded-xl ${msg.sender === 'client' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}`}>{msg.message}</div>
                                     </div>
