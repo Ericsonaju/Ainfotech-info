@@ -123,15 +123,67 @@ export const PdfInvoiceTemplate: React.FC<PdfTemplateProps> = ({ task, mode, onR
                     ))}
                 </div>
 
-                {/* Fotos Grid */}
+                {/* Registro Fotográfico de Entrada - Layout Profissional */}
                 {(task.photos && task.photos.length > 0) && (
-                    <div style={{ marginTop: '10px' }}>
-                        <p style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '5px', color: '#000' }}>Registro Fotográfico (Prova de Estado):</p>
-                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <div style={{
+                        marginTop: '15px',
+                        padding: '10px',
+                        border: '2px solid #ea580c',
+                        borderRadius: '6px',
+                        backgroundColor: '#fff7ed'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginBottom: '10px',
+                            paddingBottom: '8px',
+                            borderBottom: '1px solid #fed7aa'
+                        }}>
+                            <span style={{ fontSize: '16px' }}>📸</span>
+                            <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#9a3412', textTransform: 'uppercase' }}>
+                                Registro Fotográfico de Entrada
+                            </span>
+                            <span style={{ fontSize: '9px', color: '#c2410c', marginLeft: 'auto' }}>
+                                {task.photos.length} foto(s) anexada(s)
+                            </span>
+                        </div>
+                        <p style={{ fontSize: '9px', color: '#78350f', marginBottom: '10px', fontStyle: 'italic' }}>
+                            As fotos abaixo documentam o estado físico do equipamento no momento da entrada, servindo como prova para ambas as partes.
+                        </p>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            gap: '8px'
+                        }}>
                             {task.photos.map((photo, idx) => (
-                                <div key={idx} style={{ width: '100px', height: '75px', border: '1px solid #ccc', overflow: 'hidden' }}>
-                                    {/* CrossOrigin anonymous ajuda o html2canvas a ler a imagem se o servidor permitir */}
-                                    <img src={photo} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Foto ${idx + 1}`} />
+                                <div key={idx} style={{
+                                    border: '2px solid #9a3412',
+                                    borderRadius: '4px',
+                                    overflow: 'hidden',
+                                    backgroundColor: '#000'
+                                }}>
+                                    <img
+                                        src={photo}
+                                        crossOrigin="anonymous"
+                                        style={{
+                                            width: '100%',
+                                            height: '80px',
+                                            objectFit: 'cover',
+                                            display: 'block'
+                                        }}
+                                        alt={`Foto ${idx + 1}`}
+                                    />
+                                    <div style={{
+                                        backgroundColor: '#9a3412',
+                                        color: 'white',
+                                        fontSize: '8px',
+                                        fontWeight: 'bold',
+                                        textAlign: 'center',
+                                        padding: '2px'
+                                    }}>
+                                        FOTO #{idx + 1}
+                                    </div>
                                 </div>
                             ))}
                         </div>

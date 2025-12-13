@@ -655,6 +655,67 @@ Atenciosamente,
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* FOTOS DE ENTRADA DO EQUIPAMENTO */}
+                                    <div className="glass-panel p-4 md:p-6 rounded-2xl border border-orange-500/30 bg-gradient-to-r from-orange-900/10 to-slate-900">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                                            <div>
+                                                <label className="text-xs text-orange-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                                                    <Camera size={14} /> Registro Fotográfico de Entrada
+                                                </label>
+                                                <p className="text-[10px] text-slate-500 mt-1">
+                                                    📸 Tire fotos do equipamento para documentar o estado físico na chegada
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-orange-900/30 hover:scale-105 active:scale-95"
+                                                type="button"
+                                            >
+                                                <Camera size={16} />
+                                                <span className="hidden sm:inline">Adicionar Foto</span>
+                                                <span className="sm:hidden">+ Foto</span>
+                                            </button>
+                                            <input type="file" ref={fileInputRef} className="hidden" onChange={handlePhotoUpload} accept="image/*" capture="environment" />
+                                        </div>
+
+                                        {/* Grid de Fotos */}
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                            {(formData.photos || []).map((photo, idx) => (
+                                                <div key={idx} className="relative aspect-[4/3] bg-black rounded-xl border-2 border-slate-700 overflow-hidden group shadow-lg">
+                                                    <img src={photo} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" alt={`Foto ${idx + 1}`} />
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                                                        <span className="text-[10px] text-white font-bold">Foto #{idx + 1}</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removePhoto(idx)}
+                                                        className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all shadow-lg"
+                                                        title="Remover foto"
+                                                        type="button"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                            {/* Placeholder para adicionar mais fotos */}
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="aspect-[4/3] border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-orange-400 hover:border-orange-500/50 transition-all bg-slate-900/50"
+                                                type="button"
+                                            >
+                                                <Camera size={24} />
+                                                <span className="text-[10px] font-bold">+ Adicionar</span>
+                                            </button>
+                                        </div>
+
+                                        {/* Info Box sobre as fotos */}
+                                        <div className="mt-4 p-3 rounded-xl bg-orange-900/20 border border-orange-500/30">
+                                            <p className="text-xs text-orange-300">
+                                                <strong>⚠️ Importante:</strong> Estas fotos documentam o estado físico do equipamento na entrada e são anexadas ao PDF do recibo. Elas protegem você e o cliente em caso de dúvidas sobre danos pré-existentes.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
