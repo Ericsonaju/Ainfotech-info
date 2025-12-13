@@ -2,11 +2,13 @@
 import React, { useState, useMemo } from 'react';
 import { Task, ColumnType } from '../types';
 import { COMPANY_INFO, COLUMNS } from '../constants';
-import { TrendingUp, DollarSign, Wrench, Clock, Building2, Wallet, Calendar, Printer, FileDown, Activity, X, PieChart as PieIcon } from 'lucide-react';
+import { TrendingUp, DollarSign, Wrench, Clock, Building2, Wallet, Calendar, Printer, FileDown, Activity, X, PieChart as PieIcon, Settings } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart, PieChart, Pie, Cell } from 'recharts';
 
 interface AdminDashboardProps {
   tasks: Task[];
+  currentFee: number;
+  onUpdateFee: (newFee: number) => void;
 }
 
 // --- TEMPLATE DO RELATÓRIO MENSAL (PDF) ---
@@ -171,10 +173,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
   };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks, currentFee, onUpdateFee }) => {
   // Estado do Filtro de Mês (Padrão: Mês atual YYYY-MM)
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [localFee, setLocalFee] = useState(currentFee.toString());
 
   // --- FILTRAGEM ---
   const filteredTasks = tasks.filter(t => {
@@ -306,6 +309,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks }) => {
       }
   };
 
+  const saveFee = () => {
+      const parsed = parseFloat(localFee);
+      if (!isNaN(parsed) && parsed >= 0) {
+          onUpdateFee(parsed);
+      }
+  };
+
   return (
     <div className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 relative">
       
@@ -375,13 +385,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-slate-400 px-2">
-         <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-         <span className="uppercase text-xs font-bold tracking-wider">Visão Geral de {new Date(selectedMonth + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
-      </div>
-
-      {/* Grid de KPIs Financeiros */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Grid de KPIs + Configuração */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="glass-panel p-5 rounded-xl border-l-4 border-l-green-500 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -392,7 +397,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks }) => {
               <DollarSign size={20} />
             </div>
           </div>
-          <p className="text-xs text-slate-500">Serviços deste mês</p>
         </div>
 
         <div className="glass-panel p-5 rounded-xl border-l-4 border-l-yellow-500 flex flex-col justify-between">
@@ -405,7 +409,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks }) => {
               <Clock size={20} />
             </div>
           </div>
-          <p className="text-xs text-slate-500">Receita pendente</p>
         </div>
 
         <div className="glass-panel p-5 rounded-xl border-l-4 border-l-blue-500 flex flex-col justify-between">
@@ -418,7 +421,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks }) => {
               <TrendingUp size={20} />
             </div>
           </div>
-          <p className="text-xs text-slate-500">Média por serviço</p>
         </div>
 
         <div className="glass-panel p-5 rounded-xl border-l-4 border-l-purple-500 flex flex-col justify-between">
@@ -431,9 +433,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ tasks }) => {
               <Wrench size={20} />
             </div>
           </div>
-          <div className="flex gap-3 text-xs">
-            <span className="text-green-400">{completedServices} Concluídos</span>
-            <span className="text-blue-400">{activeServices} Ativos</span>
+        </div>
+
+         {/* CARD DE CONFIGURAÇÃO */}
+         <div className="glass-panel p-5 rounded-xl border-l-4 border-l-slate-500 flex flex-col justify-between bg-slate-800/50">
+          <div className="flex flex-col h-full">
+            <div className="flex items-center gap-2 mb-2 text-slate-300">
+                <Settings size={16} />
+                <p className="text-xs uppercase font-bold tracking-wider">Taxa Diagnóstico</p>
+            </div>
+            <div className="flex items-center gap-2 mt-auto">
+                <span className="text-slate-500 font-bold">R$</span>
+                <input 
+                    type="number" 
+                    value={localFee}
+                    onChange={(e) => setLocalFee(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded p-1 text-white font-bold"
+                    step="5"
+                />
+                <button 
+                    onClick={saveFee}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors"
+                >
+                    OK
+                </button>
+            </div>
           </div>
         </div>
       </div>

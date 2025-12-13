@@ -29,17 +29,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onAdminLogin, onClientLogin }
     e.preventDefault();
     if (!osInput.trim()) return;
 
-    let cleanInput = osInput.trim().toUpperCase();
-    console.log(`[LOGIN DEBUG] Tentativa de acesso Cliente. Input original: ${osInput}`);
-
-    if (/^\d+$/.test(cleanInput)) {
-        cleanInput = `OS-${cleanInput}`;
-    }
-    else if (cleanInput.startsWith("OS") && !cleanInput.includes("-")) {
-        cleanInput = cleanInput.replace("OS", "OS-").replace(/\s/g, "");
-    }
+    // Lógica Corrigida: Remove tudo que não for dígito e reconstrói o padrão OS-XXXX
+    const onlyNumbers = osInput.replace(/\D/g, '');
     
-    console.log(`[LOGIN DEBUG] Input formatado: ${cleanInput}`);
+    if (!onlyNumbers) {
+        setMessage('Por favor, digite apenas os números da O.S.');
+        return;
+    }
+
+    const cleanInput = `OS-${onlyNumbers}`;
+    console.log(`[LOGIN DEBUG] Input processado: ${cleanInput}`);
     onClientLogin(cleanInput);
   };
 
@@ -174,6 +173,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onAdminLogin, onClientLogin }
 
             {mode === 'client' ? (
             <form onSubmit={handleClientSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
+                {message && (
+                    <div className="text-xs p-3 rounded-xl text-center font-medium border bg-red-500/10 text-red-300 border-red-500/20">
+                        {message}
+                    </div>
+                )}
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-blue-400 uppercase tracking-wider ml-1">Número da O.S.</label>
                     <div className="relative group">

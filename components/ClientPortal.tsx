@@ -10,10 +10,11 @@ interface PdfTemplateProps {
     task: Task;
     mode: 'entry' | 'full'; 
     onReady: () => void;
+    diagnosticFee: number;
 }
 
 // --- COMPONENTE DE DOCUMENTO PDF DEDICADO ---
-export const PdfInvoiceTemplate: React.FC<PdfTemplateProps> = ({ task, mode, onReady }) => {
+export const PdfInvoiceTemplate: React.FC<PdfTemplateProps> = ({ task, mode, onReady, diagnosticFee }) => {
     const totalCost = (Number(task.serviceCost) || 0) + (Number(task.partsCost) || 0);
     const isApproved = task.isApproved;
     const expiryDate = new Date(task.budgetExpiryDate || Date.now());
@@ -159,7 +160,7 @@ export const PdfInvoiceTemplate: React.FC<PdfTemplateProps> = ({ task, mode, onR
                         <h4 style={{ margin: '0 0 5px 0', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Validade e Taxas (Art. 40 § 2º CDC)</h4>
                         <p style={{ fontSize: '10px', margin: 0, textAlign: 'justify', lineHeight: '1.4' }}>
                             O orçamento é válido por <strong>{CONFIG.budgetValidityDays} dias</strong>. A execução do serviço é isenta de taxas. Porém, em caso de <strong>recusa, retirada sem reparo ou desistência</strong> após o diagnóstico técnico realizado, será cobrada a 
-                            <strong> TAXA DE DIAGNÓSTICO de R$ {CONFIG.diagnosticFee.toFixed(2)}</strong> referente às horas técnicas de análise e desmontagem.
+                            <strong> TAXA DE DIAGNÓSTICO de R$ {diagnosticFee.toFixed(2)}</strong> referente às horas técnicas de análise e desmontagem.
                         </p>
                     </div>
                 )}
@@ -250,9 +251,10 @@ interface ClientPortalProps {
   onUpdate: (task: Task) => void;
   onLogout: () => void;
   showToast: (title: string, message: string, type: ToastType) => void;
+  diagnosticFee: number;
 }
 
-const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, showToast }) => {
+const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, showToast, diagnosticFee }) => {
   const [chatInput, setChatInput] = useState('');
   const [isSigning, setIsSigning] = useState(false);
   const [tempSignature, setTempSignature] = useState('');
@@ -399,7 +401,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, s
                     <X size={18} /> Cancelar / Fechar
                  </button>
              </div>
-            <PdfInvoiceTemplate task={task} mode={pdfMode} onReady={executePdfGeneration} />
+            <PdfInvoiceTemplate task={task} mode={pdfMode} onReady={executePdfGeneration} diagnosticFee={diagnosticFee} />
         </div>
       )}
 
@@ -545,7 +547,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, s
                         {/* AVISO DA TAXA DE DIAGNÓSTICO */}
                         <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg mb-4">
                             <p className="text-[10px] text-red-300 text-justify leading-tight">
-                                <strong>ATENÇÃO:</strong> O orçamento é gratuito. Porém, em caso de <strong>recusa ou desistência</strong> nesta etapa, será cobrada a taxa de diagnóstico de <strong>R$ {CONFIG.diagnosticFee.toFixed(2)}</strong> (Art. 40 CDC). Aprovando, você é isento desta taxa.
+                                <strong>ATENÇÃO:</strong> O orçamento é gratuito. Porém, em caso de <strong>recusa ou desistência</strong> nesta etapa, será cobrada a taxa de diagnóstico de <strong>R$ {diagnosticFee.toFixed(2)}</strong> (Art. 40 CDC). Aprovando, você é isento desta taxa.
                             </p>
                         </div>
 
@@ -598,7 +600,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, s
                 <div className="glass-panel bg-slate-900 rounded-2xl w-full max-w-md p-6 border border-slate-700">
                     <h3 className="text-red-400 font-bold text-lg mb-4 flex items-center gap-2"><AlertTriangle/> Recusar Orçamento</h3>
                     <p className="text-slate-300 text-sm mb-4">
-                        Ao recusar, você está ciente da cobrança da <strong>TAXA DE DIAGNÓSTICO de R$ {CONFIG.diagnosticFee.toFixed(2)}</strong> para retirada do equipamento sem reparo.
+                        Ao recusar, você está ciente da cobrança da <strong>TAXA DE DIAGNÓSTICO de R$ {diagnosticFee.toFixed(2)}</strong> para retirada do equipamento sem reparo.
                     </p>
                     <textarea className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm text-white mb-6 h-24" placeholder="Motivo da recusa..." value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
                     <div className="flex gap-3">
