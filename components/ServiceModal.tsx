@@ -459,7 +459,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                 </button>
                             </div>
                         </div>
-                        <button onClick={onClose} className="md:hidden p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg"><X size={20} /></button>
+                        <button onClick={onClose} className="md:hidden p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg" title="Fechar" aria-label="Fechar modal"><X size={20} /></button>
                     </div>
 
                     {/* Client Context - HIDDEN ON MOBILE UNLESS EXPANDED */}
@@ -472,6 +472,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                 className="bg-transparent text-sm font-bold text-slate-200 focus:outline-none cursor-pointer uppercase tracking-tight w-full truncate"
                                 value={formData.columnId}
                                 onChange={(e) => handleInputChange('columnId', e.target.value)}
+                                title="Status da Ordem de Serviço"
+                                aria-label="Alterar status da O.S."
                             >
                                 {COLUMNS.map(col => <option key={col.id} value={col.id} className="bg-slate-900">{col.title}</option>)}
                             </select>
@@ -517,6 +519,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                     className="bg-transparent text-sm font-bold text-slate-200 focus:outline-none cursor-pointer uppercase tracking-tight w-full truncate"
                                     value={formData.columnId}
                                     onChange={(e) => handleInputChange('columnId', e.target.value)}
+                                    title="Status da Ordem de Serviço"
+                                    aria-label="Alterar status da O.S."
                                 >
                                     {COLUMNS.map(col => <option key={col.id} value={col.id} className="bg-slate-900">{col.title}</option>)}
                                 </select>
@@ -597,7 +601,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
 
                     {/* Desktop Close Button (Floating) */}
                     <div className="absolute top-4 right-4 z-30 hidden md:block">
-                        <button onClick={onClose} className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full shadow-lg transition-colors"><X size={20} /></button>
+                        <button onClick={onClose} className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full shadow-lg transition-colors" title="Fechar" aria-label="Fechar modal"><X size={20} /></button>
                     </div>
 
                     {/* Scrollable Content Area */}

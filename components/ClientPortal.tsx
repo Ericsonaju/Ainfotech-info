@@ -469,7 +469,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ task, onUpdate, onLogout, s
                             <p className="text-[10px] text-blue-400 font-mono">OS #{task.osNumber}</p>
                         </div>
                     </div>
-                    <button onClick={onLogout} className="p-2 text-slate-400 hover:text-red-400"><LogOut size={20} /></button>
+                    <button onClick={onLogout} className="p-2 text-slate-400 hover:text-red-400" title="Sair" aria-label="Sair do portal"><LogOut size={20} /></button>
                 </div>
             </header>
 
