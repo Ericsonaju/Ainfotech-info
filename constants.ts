@@ -18,8 +18,10 @@ export const COMPANY_INFO = {
 };
 
 export const CONFIG = {
-    diagnosticFee: 70.00, // Valor da taxa de visita/diagnóstico
-    budgetValidityDays: 10 // Validade padrão em dias (Art. 40 § 1º CDC)
+  diagnosticFee: 70.00, // Valor da taxa de visita/diagnóstico
+  budgetValidityDays: 10, // Validade padrão em dias (Art. 40 § 1º CDC)
+  siteUrl: 'https://ainfotech.netlify.app', // URL do portal do cliente
+  whatsappNumber: '5579999080924' // Número do WhatsApp da empresa
 };
 
 export const COLUMNS: { id: ColumnType; title: string; color: string }[] = [
@@ -42,68 +44,68 @@ export const INITIAL_TASKS: Task[] = [];
 
 // --- CATÁLOGO DE SERVIÇOS PADRONIZADOS (AUTOMATIC PRICING) ---
 export const PREDEFINED_SERVICES = [
-  { 
-    id: 'fmt-bck-full', 
-    label: 'Formatação + Backup Completo', 
-    description: 'Formatação, drivers, Office e Backup de arquivos.', 
-    serviceCost: 150.00, 
-    partsCost: 0.00 
+  {
+    id: 'fmt-bck-full',
+    label: 'Formatação + Backup Completo',
+    description: 'Formatação, drivers, Office e Backup de arquivos.',
+    serviceCost: 150.00,
+    partsCost: 0.00
   },
-  { 
-    id: 'mo-simple', 
-    label: 'Mão de Obra (Serviço Simples)', 
-    description: 'Taxa de mão de obra para serviços de reparo padrão.', 
-    serviceCost: 180.00, 
-    partsCost: 0.00 
+  {
+    id: 'mo-simple',
+    label: 'Mão de Obra (Serviço Simples)',
+    description: 'Taxa de mão de obra para serviços de reparo padrão.',
+    serviceCost: 180.00,
+    partsCost: 0.00
   },
-  { 
-    id: 'fmt-only', 
-    label: 'Formatação Simples (Sem Backup)', 
-    description: 'Formatação e instalação do Windows 10/11 + Drivers.', 
-    serviceCost: 80.00, 
-    partsCost: 0.00 
+  {
+    id: 'fmt-only',
+    label: 'Formatação Simples (Sem Backup)',
+    description: 'Formatação e instalação do Windows 10/11 + Drivers.',
+    serviceCost: 80.00,
+    partsCost: 0.00
   },
-  { 
-    id: 'visita-tec', 
-    label: 'Visita Técnica / Diagnóstico', 
-    description: 'Deslocamento e análise técnica em domicílio (Aracaju).', 
-    serviceCost: 70.00, 
-    partsCost: 0.00 
+  {
+    id: 'visita-tec',
+    label: 'Visita Técnica / Diagnóstico',
+    description: 'Deslocamento e análise técnica em domicílio (Aracaju).',
+    serviceCost: 70.00,
+    partsCost: 0.00
   },
-  { 
-    id: 'ssd-120', 
-    label: 'Peça: SSD 120GB', 
-    description: 'Unidade SSD 120GB (Apenas Peça).', 
-    serviceCost: 0.00, 
-    partsCost: 100.00 
+  {
+    id: 'ssd-120',
+    label: 'Peça: SSD 120GB',
+    description: 'Unidade SSD 120GB (Apenas Peça).',
+    serviceCost: 0.00,
+    partsCost: 100.00
   },
-  { 
-    id: 'ssd-240', 
-    label: 'Peça: SSD 240GB', 
-    description: 'Unidade SSD 240GB (Apenas Peça).', 
-    serviceCost: 0.00, 
-    partsCost: 180.00 
+  {
+    id: 'ssd-240',
+    label: 'Peça: SSD 240GB',
+    description: 'Unidade SSD 240GB (Apenas Peça).',
+    serviceCost: 0.00,
+    partsCost: 180.00
   },
-  { 
-    id: 'ssd-480', 
-    label: 'Peça: SSD 480GB', 
-    description: 'Unidade SSD 480GB (Apenas Peça).', 
-    serviceCost: 0.00, 
-    partsCost: 350.00 
+  {
+    id: 'ssd-480',
+    label: 'Peça: SSD 480GB',
+    description: 'Unidade SSD 480GB (Apenas Peça).',
+    serviceCost: 0.00,
+    partsCost: 350.00
   },
-  { 
-    id: 'brd-rec', 
-    label: 'Recuperação de Placa (Eletrônica)', 
-    description: 'Reparo eletrônico em placa mãe (curto, solda BGA, componentes).', 
-    serviceCost: 250.00, 
-    partsCost: 0.00 
+  {
+    id: 'brd-rec',
+    label: 'Recuperação de Placa (Eletrônica)',
+    description: 'Reparo eletrônico em placa mãe (curto, solda BGA, componentes).',
+    serviceCost: 250.00,
+    partsCost: 0.00
   },
-  { 
-    id: 'bck-01', 
-    label: 'Serviço de Backup Avulso', 
-    description: 'Cópia de segurança de arquivos do usuário (Até 100GB).', 
-    serviceCost: 50.00, 
-    partsCost: 0.00 
+  {
+    id: 'bck-01',
+    label: 'Serviço de Backup Avulso',
+    description: 'Cópia de segurança de arquivos do usuário (Até 100GB).',
+    serviceCost: 50.00,
+    partsCost: 0.00
   }
 ];
 
