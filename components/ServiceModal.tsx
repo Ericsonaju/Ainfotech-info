@@ -319,9 +319,17 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                 <span className="font-mono font-bold text-blue-400 tracking-tight text-lg">{formData.osNumber}</span>
                             </div>
                             <div className="md:hidden">
-                                <button onClick={() => setIsMobileDetailsOpen(!isMobileDetailsOpen)} className="text-xs flex items-center gap-1 text-slate-400 bg-slate-800 px-2 py-1 rounded-full border border-slate-700">
-                                    {isMobileDetailsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                    {isMobileDetailsOpen ? 'Ocultar Detalhes' : 'Ver Detalhes'}
+                                <button
+                                    onClick={() => setIsMobileDetailsOpen(prev => !prev)}
+                                    className="text-xs flex items-center gap-1 text-slate-400 bg-slate-800 px-2 py-1 rounded-full border border-slate-700"
+                                    type="button"
+                                >
+                                    {isMobileDetailsOpen ? (
+                                        <ChevronUp size={14} key="chevron-up" />
+                                    ) : (
+                                        <ChevronDown size={14} key="chevron-down" />
+                                    )}
+                                    <span>{isMobileDetailsOpen ? 'Ocultar Detalhes' : 'Ver Detalhes'}</span>
                                 </button>
                             </div>
                         </div>
@@ -329,8 +337,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                     </div>
 
                     {/* Client Context - HIDDEN ON MOBILE UNLESS EXPANDED */}
-                    <div className={`p-4 space-y-4 overflow-y-auto custom-scrollbar md:flex-1 ${isMobileDetailsOpen ? 'block flex-1' : 'hidden md:block'}`}>
-
+                    {/* Desktop: sempre visível. Mobile: só mostra se isMobileDetailsOpen */}
+                    <div className="hidden md:block md:flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar">
                         {/* Status Badge */}
                         <div className="flex items-center gap-2 mb-2 bg-slate-800 p-2 rounded-lg border border-slate-700">
                             <span className={`w-3 h-3 rounded-full shadow-lg flex-shrink-0 ${formData.columnId === ColumnType.Done ? 'bg-green-500 shadow-green-500/50' : formData.columnId === ColumnType.Execution ? 'bg-blue-500 shadow-blue-500/50' : 'bg-yellow-500 shadow-yellow-500/50'}`}></span>
@@ -366,12 +374,58 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                             </div>
                         </div>
 
-                        {/* Sidebar Footer Actions (Only visible in sidebar when expanded on mobile or always on desktop) */}
+                        {/* Sidebar Footer Actions */}
                         <div className="pt-4 border-t border-white/5 flex gap-2">
-                            <button onClick={(e) => { e.preventDefault(); setShowDeleteConfirm(true); }} className="p-3 rounded-xl bg-slate-800 hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors flex-1 flex justify-center"><Trash2 size={18} /></button>
-                            <button onClick={() => setIsPrinting(true)} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 transition-colors flex-1 flex justify-center"><Printer size={18} /></button>
+                            <button onClick={(e) => { e.preventDefault(); setShowDeleteConfirm(true); }} className="p-3 rounded-xl bg-slate-800 hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors flex-1 flex justify-center" title="Excluir O.S." aria-label="Excluir Ordem de Serviço"><Trash2 size={18} /></button>
+                            <button onClick={() => setIsPrinting(true)} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 transition-colors flex-1 flex justify-center" title="Imprimir/PDF" aria-label="Gerar PDF"><Printer size={18} /></button>
                         </div>
                     </div>
+
+                    {/* Mobile: Conteúdo expandível separado para evitar erro de reconciliação */}
+                    {isMobileDetailsOpen && (
+                        <div className="md:hidden flex-1 p-4 space-y-4 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+                            {/* Status Badge */}
+                            <div className="flex items-center gap-2 mb-2 bg-slate-800 p-2 rounded-lg border border-slate-700">
+                                <span className={`w-3 h-3 rounded-full shadow-lg flex-shrink-0 ${formData.columnId === ColumnType.Done ? 'bg-green-500 shadow-green-500/50' : formData.columnId === ColumnType.Execution ? 'bg-blue-500 shadow-blue-500/50' : 'bg-yellow-500 shadow-yellow-500/50'}`}></span>
+                                <select
+                                    className="bg-transparent text-sm font-bold text-slate-200 focus:outline-none cursor-pointer uppercase tracking-tight w-full truncate"
+                                    value={formData.columnId}
+                                    onChange={(e) => handleInputChange('columnId', e.target.value)}
+                                >
+                                    {COLUMNS.map(col => <option key={col.id} value={col.id} className="bg-slate-900">{col.title}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Info Card */}
+                            <div className="bg-slate-800/50 p-3 rounded-xl border border-white/5 space-y-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="bg-slate-700 p-2 rounded-lg"><User size={16} className="text-slate-300" /></div>
+                                    <div className="overflow-hidden w-full">
+                                        <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Cliente</div>
+                                        <input className="bg-slate-900/50 text-sm font-semibold text-white w-full p-2 rounded border border-slate-700 focus:border-blue-500 outline-none" value={formData.clientName} onChange={(e) => handleInputChange('clientName', e.target.value)} placeholder="Nome do Cliente" />
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="bg-slate-700 p-2 rounded-lg"><Monitor size={16} className="text-slate-300" /></div>
+                                    <div className="overflow-hidden w-full">
+                                        <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Equipamento</div>
+                                        <input className="bg-slate-900/50 text-sm text-slate-200 w-full p-2 rounded border border-slate-700 focus:border-blue-500 outline-none" value={formData.equipment} onChange={(e) => handleInputChange('equipment', e.target.value)} placeholder="Modelo do Equipamento" />
+                                    </div>
+                                </div>
+                                {/* Mini Finance Summary */}
+                                <div className="pt-2 border-t border-white/5 flex justify-between items-center bg-slate-900/50 p-2 rounded">
+                                    <span className="text-[10px] text-slate-500 font-bold">Total Estimado</span>
+                                    <span className="text-sm font-mono font-bold text-green-400">R$ {formatCurrencyValue((formData.serviceCost || 0) + (formData.partsCost || 0))}</span>
+                                </div>
+                            </div>
+
+                            {/* Sidebar Footer Actions */}
+                            <div className="pt-4 border-t border-white/5 flex gap-2">
+                                <button onClick={(e) => { e.preventDefault(); setShowDeleteConfirm(true); }} className="p-3 rounded-xl bg-slate-800 hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors flex-1 flex justify-center" title="Excluir O.S." aria-label="Excluir Ordem de Serviço"><Trash2 size={18} /></button>
+                                <button onClick={() => setIsPrinting(true)} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 transition-colors flex-1 flex justify-center" title="Imprimir/PDF" aria-label="Gerar PDF"><Printer size={18} /></button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Mobile Tab Navigation (Horizontal Scroll) */}
                     <div className="md:hidden border-t border-slate-800 bg-slate-900 px-2 py-2">
@@ -500,8 +554,8 @@ Atenciosamente,
                                                             }
                                                         }}
                                                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg ${isPhoneValid
-                                                                ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer hover:scale-105 active:scale-95 shadow-green-900/30'
-                                                                : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                                                            ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer hover:scale-105 active:scale-95 shadow-green-900/30'
+                                                            : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                                                             }`}
                                                         title={isPhoneValid ? 'Enviar instruções via WhatsApp' : 'Preencha o telefone do cliente primeiro'}
                                                     >
@@ -533,8 +587,8 @@ Atenciosamente,
                                                 </label>
                                                 <input
                                                     className={`w-full bg-slate-900 border rounded-xl p-3 text-sm text-slate-200 transition-all outline-none ${(formData.clientPhone || '').replace(/\D/g, '').length >= 10
-                                                            ? 'border-green-500/50 focus:border-green-500'
-                                                            : 'border-slate-700 focus:border-blue-500'
+                                                        ? 'border-green-500/50 focus:border-green-500'
+                                                        : 'border-slate-700 focus:border-blue-500'
                                                         }`}
                                                     value={formData.clientPhone}
                                                     onChange={(e) => handleInputChange('clientPhone', e.target.value)}
