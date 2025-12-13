@@ -175,14 +175,20 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
     };
 
     const handleDiagnosis = async () => {
+        if (!geminiService.isConfigured()) {
+            showToast('IA não configurada', 'O serviço de IA requer configuração. Entre em contato com o administrador.', 'warning');
+            return;
+        }
+
         setIsDiagnosing(true);
         try {
             const result = await geminiService.breakDownTask(formData.title, formData.description);
             const newSubtasks = result.subtasks.map((st, i) => ({ id: `st-${Date.now()}-${i}`, title: st, completed: false }));
             setFormData(prev => prev ? ({ ...prev, subtasks: [...prev.subtasks, ...newSubtasks] }) : null);
             showToast('IA Sucesso', 'Plano de ação gerado automaticamente.', 'success');
-        } catch (e) {
-            showToast('Erro IA', 'Falha ao gerar diagnóstico com IA.', 'error');
+        } catch (e: any) {
+            const errorMsg = e?.message || 'Falha ao gerar diagnóstico com IA.';
+            showToast('Erro IA', errorMsg, 'error');
         } finally { setIsDiagnosing(false); }
     };
 
@@ -375,8 +381,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`flex-1 min-w-[80px] flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-lg text-xs font-medium transition-all ${activeTab === tab.id
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-slate-400 bg-slate-800'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'text-slate-400 bg-slate-800'
                                         }`}
                                 >
                                     <tab.icon size={16} />
@@ -394,8 +400,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                                     }`}
                             >
                                 <tab.icon size={18} />
