@@ -325,12 +325,16 @@ CREATE INDEX IF NOT EXISTS idx_ml_cache_expires ON ml_cache(expires_at);
 
 -- Trigger para atualizar updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$;
 
 -- Aplicar trigger em todas as tabelas
 CREATE TRIGGER update_products_updated_at
@@ -355,7 +359,11 @@ CREATE TRIGGER update_orders_updated_at
 
 -- Função para gerar número do pedido
 CREATE OR REPLACE FUNCTION generate_order_number()
-RETURNS VARCHAR(20) AS $$
+RETURNS VARCHAR(20)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
     year_part VARCHAR(4);
     sequence_part INTEGER;
@@ -374,11 +382,15 @@ BEGIN
     
     RETURN order_num;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Função para decrementar estoque após pedido
 CREATE OR REPLACE FUNCTION decrement_stock_after_order()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
     -- Atualiza o estoque do produto
     UPDATE products
@@ -398,7 +410,7 @@ BEGIN
     
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trigger_decrement_stock
     AFTER INSERT ON order_items
