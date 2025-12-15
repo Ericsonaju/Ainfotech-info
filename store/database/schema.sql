@@ -407,18 +407,20 @@ CREATE TRIGGER trigger_decrement_stock
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
+-- IMPORTANTE: RLS DEVE estar habilitado ANTES de criar as políticas
+-- Caso contrário, as políticas existirão mas não serão aplicadas
 
--- Habilitar RLS em TODAS as tabelas
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE affiliate_products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE legal_consents ENABLE ROW LEVEL SECURITY;
-ALTER TABLE stock_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE price_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE generated_ads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ml_cache ENABLE ROW LEVEL SECURITY;
+-- Habilitar RLS em TODAS as tabelas (IF EXISTS para segurança)
+ALTER TABLE IF EXISTS products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS affiliate_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS legal_consents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS stock_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS price_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS generated_ads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS ml_cache ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- POLÍTICAS: PRODUCTS (Produtos Próprios)
