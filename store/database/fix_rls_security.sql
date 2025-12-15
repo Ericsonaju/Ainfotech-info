@@ -33,56 +33,119 @@ ALTER TABLE generated_ads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ml_cache ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
--- 2. REMOVER POLÍTICAS EXISTENTES (se houver)
+-- 2. REMOVER TODAS AS POLÍTICAS EXISTENTES
 -- ============================================
+-- Remove todas as políticas para recriar do zero e evitar conflitos
 
--- Products
-DROP POLICY IF EXISTS "Public read access to products" ON products;
-DROP POLICY IF EXISTS "Admin full access to products" ON products;
-DROP POLICY IF EXISTS "Anon read products" ON products;
-DROP POLICY IF EXISTS "Auth manage products" ON products;
+-- Products - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'products') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON products';
+    END LOOP;
+END $$;
 
--- Affiliate Products
-DROP POLICY IF EXISTS "Public read access to affiliate_products" ON affiliate_products;
-DROP POLICY IF EXISTS "Admin full access to affiliate_products" ON affiliate_products;
-DROP POLICY IF EXISTS "Anon read affiliate_products" ON affiliate_products;
-DROP POLICY IF EXISTS "Auth manage affiliate_products" ON affiliate_products;
+-- Affiliate Products - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'affiliate_products') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON affiliate_products';
+    END LOOP;
+END $$;
 
--- Orders
-DROP POLICY IF EXISTS "Admin full access to orders" ON orders;
-DROP POLICY IF EXISTS "Auth manage orders" ON orders;
-DROP POLICY IF EXISTS "Anon create orders" ON orders;
+-- Orders - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'orders') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON orders';
+    END LOOP;
+END $$;
 
--- Order Items
-DROP POLICY IF EXISTS "Auth manage order_items" ON order_items;
-DROP POLICY IF EXISTS "Anon read order_items" ON order_items;
+-- Order Items - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'order_items') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON order_items';
+    END LOOP;
+END $$;
 
--- Customers
-DROP POLICY IF EXISTS "Admin full access to customers" ON customers;
-DROP POLICY IF EXISTS "Auth manage customers" ON customers;
-DROP POLICY IF EXISTS "Anon create customers" ON customers;
+-- Customers - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'customers') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON customers';
+    END LOOP;
+END $$;
 
--- Legal Consents
-DROP POLICY IF EXISTS "Admin full access to legal_consents" ON legal_consents;
-DROP POLICY IF EXISTS "Auth manage legal_consents" ON legal_consents;
-DROP POLICY IF EXISTS "Anon create consents" ON legal_consents;
+-- Legal Consents - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'legal_consents') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON legal_consents';
+    END LOOP;
+END $$;
 
--- Stock History
-DROP POLICY IF EXISTS "Auth manage stock_history" ON stock_history;
-DROP POLICY IF EXISTS "Anon read stock_history" ON stock_history;
+-- Stock History - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'stock_history') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON stock_history';
+    END LOOP;
+END $$;
 
--- Price History
-DROP POLICY IF EXISTS "Auth manage price_history" ON price_history;
-DROP POLICY IF EXISTS "Anon read price_history" ON price_history;
+-- Price History - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'price_history') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON price_history';
+    END LOOP;
+END $$;
 
--- Generated Ads
-DROP POLICY IF EXISTS "Auth manage generated_ads" ON generated_ads;
-DROP POLICY IF EXISTS "Anon read generated_ads" ON generated_ads;
+-- Generated Ads - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'generated_ads') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON generated_ads';
+    END LOOP;
+END $$;
 
--- ML Cache
-DROP POLICY IF EXISTS "Auth manage ml_cache" ON ml_cache;
-DROP POLICY IF EXISTS "Public read ml_cache" ON ml_cache;
-DROP POLICY IF EXISTS "Anon manage ml_cache" ON ml_cache;
+-- ML Cache - Remove todas as políticas existentes
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = 'ml_cache') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON ml_cache';
+    END LOOP;
+END $$;
 
 -- ============================================
 -- 3. CRIAR NOVAS POLÍTICAS DE ACESSO
@@ -206,24 +269,35 @@ CREATE POLICY "Anon create consents" ON legal_consents
 
 -- ----------------------------------------
 -- STOCK_HISTORY (Histórico de Estoque)
--- Apenas authenticated
+-- Leitura: Pública (para consultas)
+-- Escrita: Authenticated + Anon (via trigger)
 -- ----------------------------------------
+CREATE POLICY "Anon read stock_history" ON stock_history
+    FOR SELECT
+    TO anon
+    USING (true);
+
+CREATE POLICY "Anon insert stock_history" ON stock_history
+    FOR INSERT
+    TO anon
+    WITH CHECK (true);
+
 CREATE POLICY "Auth manage stock_history" ON stock_history
     FOR ALL
     TO authenticated
     USING (true)
     WITH CHECK (true);
 
--- Anon pode inserir (via trigger de pedido)
-CREATE POLICY "Anon insert stock_history" ON stock_history
-    FOR INSERT
-    TO anon
-    WITH CHECK (true);
-
 -- ----------------------------------------
 -- PRICE_HISTORY (Histórico de Preços)
--- Apenas authenticated
+-- Leitura: Pública (para consultas)
+-- Escrita: Apenas authenticated
 -- ----------------------------------------
+CREATE POLICY "Anon read price_history" ON price_history
+    FOR SELECT
+    TO anon
+    USING (true);
+
 CREATE POLICY "Auth manage price_history" ON price_history
     FOR ALL
     TO authenticated
