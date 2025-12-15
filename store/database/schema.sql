@@ -408,28 +408,119 @@ CREATE TRIGGER trigger_decrement_stock
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
 
--- Habilitar RLS nas tabelas sensíveis
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+-- Habilitar RLS em TODAS as tabelas
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE affiliate_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE legal_consents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE price_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE generated_ads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ml_cache ENABLE ROW LEVEL SECURITY;
 
--- Políticas básicas (ajustar conforme necessidade)
--- Para admin, permitir tudo
-CREATE POLICY "Admin full access to customers" ON customers
-    FOR ALL USING (auth.role() = 'authenticated');
+-- ============================================
+-- POLÍTICAS: PRODUCTS (Produtos Próprios)
+-- ============================================
+CREATE POLICY "Anon read products" ON products
+    FOR SELECT TO anon USING (status = 'active');
 
-CREATE POLICY "Admin full access to orders" ON orders
-    FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Auth manage products" ON products
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-CREATE POLICY "Admin full access to legal_consents" ON legal_consents
-    FOR ALL USING (auth.role() = 'authenticated');
+-- ============================================
+-- POLÍTICAS: AFFILIATE_PRODUCTS (Produtos Afiliados)
+-- ============================================
+CREATE POLICY "Anon read affiliate_products" ON affiliate_products
+    FOR SELECT TO anon USING (status = 'active');
 
--- Produtos são públicos para leitura
-CREATE POLICY "Public read access to products" ON products
-    FOR SELECT USING (true);
+CREATE POLICY "Auth manage affiliate_products" ON affiliate_products
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-CREATE POLICY "Public read access to affiliate_products" ON affiliate_products
-    FOR SELECT USING (true);
+-- ============================================
+-- POLÍTICAS: ORDERS (Pedidos)
+-- ============================================
+CREATE POLICY "Auth manage orders" ON orders
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon create orders" ON orders
+    FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY "Anon read orders" ON orders
+    FOR SELECT TO anon USING (true);
+
+-- ============================================
+-- POLÍTICAS: ORDER_ITEMS (Itens do Pedido)
+-- ============================================
+CREATE POLICY "Auth manage order_items" ON order_items
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon create order_items" ON order_items
+    FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY "Anon read order_items" ON order_items
+    FOR SELECT TO anon USING (true);
+
+-- ============================================
+-- POLÍTICAS: CUSTOMERS (Clientes)
+-- ============================================
+CREATE POLICY "Auth manage customers" ON customers
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon create customers" ON customers
+    FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY "Anon update customers" ON customers
+    FOR UPDATE TO anon USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon select customers" ON customers
+    FOR SELECT TO anon USING (true);
+
+-- ============================================
+-- POLÍTICAS: LEGAL_CONSENTS (Consentimentos)
+-- ============================================
+CREATE POLICY "Auth manage legal_consents" ON legal_consents
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon create consents" ON legal_consents
+    FOR INSERT TO anon WITH CHECK (true);
+
+-- ============================================
+-- POLÍTICAS: STOCK_HISTORY (Histórico Estoque)
+-- ============================================
+CREATE POLICY "Auth manage stock_history" ON stock_history
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon insert stock_history" ON stock_history
+    FOR INSERT TO anon WITH CHECK (true);
+
+-- ============================================
+-- POLÍTICAS: PRICE_HISTORY (Histórico Preços)
+-- ============================================
+CREATE POLICY "Auth manage price_history" ON price_history
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- ============================================
+-- POLÍTICAS: GENERATED_ADS (Anúncios IA)
+-- ============================================
+CREATE POLICY "Auth manage generated_ads" ON generated_ads
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon read generated_ads" ON generated_ads
+    FOR SELECT TO anon USING (true);
+
+CREATE POLICY "Anon insert generated_ads" ON generated_ads
+    FOR INSERT TO anon WITH CHECK (true);
+
+-- ============================================
+-- POLÍTICAS: ML_CACHE (Cache ML)
+-- ============================================
+CREATE POLICY "Anon manage ml_cache" ON ml_cache
+    FOR ALL TO anon USING (true) WITH CHECK (true);
+
+CREATE POLICY "Auth manage ml_cache" ON ml_cache
+    FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ============================================
 -- COMENTÁRIOS PARA DOCUMENTAÇÃO
