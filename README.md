@@ -13,7 +13,7 @@ Este projeto está configurado para deploy na Vercel. Siga os passos:
 3. Clique em "Add New Project"
 4. Importe o repositório do GitHub
 5. Configure as variáveis de ambiente (se necessário):
-   - `GEMINI_API_KEY` - Sua chave da API Gemini
+   - `VITE_GEMINI_API_KEY` - Sua chave da API Gemini (atenção: em frontend ela fica exposta no bundle)
    - `VITE_SUPABASE_URL` - URL do seu projeto Supabase
    - `VITE_SUPABASE_ANON_KEY` - Chave anônima do Supabase
 6. Clique em "Deploy"
@@ -38,7 +38,7 @@ Este projeto está configurado para deploy na Vercel. Siga os passos:
 2. Configure as variáveis de ambiente criando um arquivo `.env.local`:
 
    ```
-   GEMINI_API_KEY=sua_chave_aqui
+   VITE_GEMINI_API_KEY=sua_chave_aqui
    VITE_SUPABASE_URL=sua_url_supabase
    VITE_SUPABASE_ANON_KEY=sua_chave_anon
    ```
