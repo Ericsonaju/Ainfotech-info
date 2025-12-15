@@ -32,6 +32,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
 
     // Mobile specific state
     const [isMobileDetailsOpen, setIsMobileDetailsOpen] = useState(false);
+    
+    // Proteção contra double-click
+    const [isSaving, setIsSaving] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -324,12 +327,29 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validação de tipo de arquivo
+        const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            showToast('Tipo Inválido', 'Apenas imagens JPEG, PNG, GIF ou WebP são permitidas.', 'error');
+            e.target.value = '';
+            return;
+        }
+
+        // Validação de tamanho (máximo 10MB antes da compressão)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        if (file.size > MAX_FILE_SIZE) {
+            showToast('Arquivo Grande', 'O arquivo é muito grande. Máximo permitido: 10MB.', 'error');
+            e.target.value = '';
+            return;
+        }
+
         // Limite de 6 fotos para documentação completa
         const MAX_PHOTOS = 6;
         const currentCount = formData?.photos?.length || 0;
 
         if (currentCount >= MAX_PHOTOS) {
             showToast('Limite Atingido', `Máximo de ${MAX_PHOTOS} fotos permitido.`, 'warning');
+            e.target.value = '';
             return;
         }
 
@@ -365,18 +385,23 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
         return true;
     };
 
-    const handleSave = () => {
-        if (formData) {
+    const handleSave = async () => {
+        if (formData && !isSaving) {
             if (!validatePhone()) return;
-            onSave(formData);
-            onClose();
+            setIsSaving(true);
+            try {
+                onSave(formData);
+                onClose();
+            } finally {
+                setIsSaving(false);
+            }
         }
     };
 
     const confirmDelete = () => { if (formData?.id) { onDelete(formData.id); setShowDeleteConfirm(false); } };
 
-    const handleFinishService = () => {
-        if (!formData) return;
+    const handleFinishService = async () => {
+        if (!formData || isSaving) return;
         if (!validatePhone()) return;
 
         if (!formData.technicalObservation || formData.technicalObservation.length < 10) {
@@ -387,15 +412,26 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, task, onSa
             showToast('Assinatura Obrigatória', 'O técnico responsável deve assinar para concluir.', 'error');
             setActiveTab('technical'); setIsSigningTech(true); return;
         }
-        onSave({ ...formData, columnId: ColumnType.Done, chatHistory: [...formData.chatHistory, { id: `sys-${Date.now()}`, sender: 'system', message: '🛠️ Serviço concluído.', timestamp: Date.now() }] });
-        onClose();
+        
+        setIsSaving(true);
+        try {
+            onSave({ ...formData, columnId: ColumnType.Done, chatHistory: [...formData.chatHistory, { id: `sys-${Date.now()}`, sender: 'system', message: '🛠️ Serviço concluído.', timestamp: Date.now() }] });
+            onClose();
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleSendToApproval = () => {
-        if (formData) {
+    const handleSendToApproval = async () => {
+        if (formData && !isSaving) {
             if (!validatePhone()) return;
-            onSave({ ...formData, columnId: ColumnType.Approval });
-            onClose();
+            setIsSaving(true);
+            try {
+                onSave({ ...formData, columnId: ColumnType.Approval });
+                onClose();
+            } finally {
+                setIsSaving(false);
+            }
         }
     }
 
@@ -1034,17 +1070,29 @@ Atenciosamente,
                     {/* Sticky Action Footer (Inside Content Area) */}
                     <div className="flex-none p-4 bg-slate-900/90 backdrop-blur-md border-t border-white/10 flex flex-col md:flex-row justify-end gap-3 z-20">
                         {formData.columnId === ColumnType.Entry && (
-                            <button onClick={handleSendToApproval} className="w-full md:w-auto px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-yellow-900/20 transition-all">
+                            <button 
+                                onClick={handleSendToApproval} 
+                                disabled={isSaving}
+                                className="w-full md:w-auto px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-yellow-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
                                 <AlertTriangle size={18} /> <span className="md:inline">Enviar Aprovação</span>
                             </button>
                         )}
                         {formData.columnId === ColumnType.Execution && (
-                            <button onClick={handleFinishService} className="w-full md:w-auto px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20 transition-all">
+                            <button 
+                                onClick={handleFinishService} 
+                                disabled={isSaving}
+                                className="w-full md:w-auto px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
                                 <CheckCircle2 size={18} /> <span className="md:inline">Concluir</span>
                             </button>
                         )}
-                        <button onClick={handleSave} className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-900/20 transition-all">
-                            Salvar
+                        <button 
+                            onClick={handleSave} 
+                            disabled={isSaving}
+                            className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isSaving ? 'Salvando...' : 'Salvar'}
                         </button>
                     </div>
                 </main>

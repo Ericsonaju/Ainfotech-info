@@ -4,6 +4,19 @@ import { ColumnType, Task } from '../types';
 import TaskCard from './TaskCard';
 import { Plus } from 'lucide-react';
 
+// Mapeamento de classes Tailwind para cores CSS hex
+const TAILWIND_COLOR_MAP: Record<string, string> = {
+  'bg-slate-500': '#64748b',
+  'bg-yellow-500': '#eab308',
+  'bg-blue-500': '#3b82f6',
+  'bg-emerald-500': '#10b981',
+  'bg-green-500': '#22c55e',
+  'bg-red-500': '#ef4444',
+  'bg-orange-500': '#f97316',
+  'bg-purple-500': '#a855f7',
+  'bg-indigo-500': '#6366f1',
+};
+
 interface ColumnProps {
   id: ColumnType;
   title: string;
@@ -27,10 +40,13 @@ const Column: React.FC<ColumnProps> = ({
   onTaskClick,
   onAddTask
 }) => {
+  // Converte classe Tailwind para cor CSS hex
+  const borderColor = TAILWIND_COLOR_MAP[color] || '#64748b';
+
   return (
     <div 
       className="flex flex-col flex-shrink-0 w-[85vw] md:w-80 h-full max-h-full glass-panel rounded-xl border-t-4 border-t-transparent overflow-hidden transition-colors snap-center"
-      style={{ borderTopColor: color.replace('bg-', '').replace('text-', '') }}
+      style={{ borderTopColor: borderColor }}
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, id)}
     >

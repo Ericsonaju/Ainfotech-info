@@ -87,7 +87,15 @@ export default function App() {
 
   const showToast = (title: string, message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substring(7);
-    setToasts(prev => [...prev, { id, title, message, type }]);
+    const MAX_TOASTS = 5; // Limite máximo de toasts simultâneos
+    setToasts(prev => {
+      const newToasts = [...prev, { id, title, message, type }];
+      // Remove os toasts mais antigos se exceder o limite
+      if (newToasts.length > MAX_TOASTS) {
+        return newToasts.slice(-MAX_TOASTS);
+      }
+      return newToasts;
+    });
   };
 
   const removeToast = (id: string) => {
@@ -235,13 +243,23 @@ export default function App() {
     e.preventDefault();
     if (!draggedTaskId) return;
 
-    const originalTasks = [...tasks];
-    setTasks(prev => prev.map(t =>
-      t.id === draggedTaskId ? { ...t, columnId: targetColumnId } : t
-    ));
+    // Captura o estado atual de forma síncrona para evitar race conditions
+    const currentDraggedId = draggedTaskId;
+    let taskToUpdate: Task | undefined;
+    let originalTasks: Task[] = [];
+
+    setTasks(prev => {
+      originalTasks = [...prev];
+      taskToUpdate = prev.find(t => t.id === currentDraggedId);
+      return prev.map(t =>
+        t.id === currentDraggedId ? { ...t, columnId: targetColumnId } : t
+      );
+    });
+
+    // Aguarda um tick para garantir que o estado foi atualizado
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     try {
-      const taskToUpdate = tasks.find(t => t.id === draggedTaskId);
       if (taskToUpdate) {
         if (taskToUpdate.columnId !== targetColumnId) {
           const colName = COLUMNS.find(c => c.id === targetColumnId)?.title;
@@ -251,14 +269,14 @@ export default function App() {
         // If moving an AI generated task that isn't saved yet, create it now
         if (taskToUpdate.id.startsWith('gen-')) {
           const createdTask = await taskService.createTask({ ...taskToUpdate, columnId: targetColumnId });
-          setTasks(prev => prev.map(t => t.id === draggedTaskId ? createdTask : t));
+          setTasks(prev => prev.map(t => t.id === currentDraggedId ? createdTask : t));
         } else {
           await taskService.updateTask({ ...taskToUpdate, columnId: targetColumnId });
         }
       }
-    } catch (e: any) {
+    } catch (err: any) {
       setTasks(originalTasks);
-      showToast('Erro ao Mover', e.message, 'error');
+      showToast('Erro ao Mover', err.message, 'error');
     }
     setDraggedTaskId(null);
   };

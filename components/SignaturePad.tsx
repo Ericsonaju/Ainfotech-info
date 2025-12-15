@@ -13,11 +13,19 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onChange }) => {
 
   // Ajusta o tamanho do canvas para corresponder ao tamanho de exibição (High DPI fix)
   useEffect(() => {
+    let isMounted = true;
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const resizeCanvas = () => {
+      if (!isMounted) return;
+      
       const canvas = canvasRef.current;
       const container = containerRef.current;
       if (canvas && container) {
         const rect = container.getBoundingClientRect();
+        // Evita resize desnecessário se as dimensões não mudaram
+        if (canvas.width === rect.width && canvas.height === rect.height) return;
+        
         // Define a resolução interna igual ao tamanho de exibição CSS
         canvas.width = rect.width;
         canvas.height = rect.height;
@@ -37,11 +45,14 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onChange }) => {
     window.addEventListener('resize', resizeCanvas);
     
     // Pequeno delay para garantir que o modal terminou a animação de abertura
-    const timeout = setTimeout(resizeCanvas, 100);
+    resizeTimeout = setTimeout(resizeCanvas, 100);
     
     return () => {
+        isMounted = false;
         window.removeEventListener('resize', resizeCanvas);
-        clearTimeout(timeout);
+        if (resizeTimeout) {
+            clearTimeout(resizeTimeout);
+        }
     };
   }, []);
 

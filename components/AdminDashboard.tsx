@@ -23,10 +23,16 @@ const MonthlyReportTemplate: React.FC<{
     const monthName = dateObj.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
     // Aciona o callback quando o componente montar (para o html2pdf capturar)
+    // Usamos useRef para manter referência estável da função
+    const onReadyRef = React.useRef(onReady);
+    React.useEffect(() => {
+        onReadyRef.current = onReady;
+    }, [onReady]);
+
     React.useEffect(() => {
         const timer = setTimeout(() => {
             console.log("[REPORT DEBUG] Template de relatório pronto.");
-            onReady();
+            onReadyRef.current();
         }, 1500);
         return () => clearTimeout(timer);
     }, []);
