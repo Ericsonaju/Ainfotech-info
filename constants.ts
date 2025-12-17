@@ -20,7 +20,7 @@ export const COMPANY_INFO = {
 export const CONFIG = {
   diagnosticFee: 70.00, // Valor da taxa de visita/diagnóstico
   budgetValidityDays: 10, // Validade padrão em dias (Art. 40 § 1º CDC)
-  siteUrl: 'https://ainfotech.netlify.app', // URL do portal do cliente
+  siteUrl: 'https://ainfotechinformatica.com.br', // URL do portal do cliente
   whatsappNumber: '5579999080924' // Número do WhatsApp da empresa
 };
 
